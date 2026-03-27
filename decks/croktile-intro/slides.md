@@ -51,72 +51,68 @@ Best of all competitors: Triton / CuTe / Cutile / Helion
 
 **CrokTile — matmul kernel (25 LOC)**
 
-```
-__co__ void matmul(
-    global f16 [M, K] lhs,
-    global f16 [N, K] rhs,
-    global f16 [M, N] output) {
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.co</span><span class="editor-badge">CROKTILE</span></div><pre><code><span class="hl-kw">__co__</span> <span class="hl-ty">void</span> matmul<span class="hl-pu">(</span>
+    <span class="hl-st">global</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>M<span class="hl-pu">,</span> K<span class="hl-pu">]</span> lhs<span class="hl-pu">,</span>
+    <span class="hl-st">global</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>N<span class="hl-pu">,</span> K<span class="hl-pu">]</span> rhs<span class="hl-pu">,</span>
+    <span class="hl-st">global</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>M<span class="hl-pu">,</span> N<span class="hl-pu">]</span> output<span class="hl-pu">)</span> <span class="hl-pu">{</span>
 
-  parallel {block_m, block_n}
-    by [cdiv(M, WARP_M), cdiv(N, WARP_N)]
-    : block {
-    shared f16 [WARP_M, TILE_K] lhs_s;
-    shared f16 [WARP_N, TILE_K] rhs_s;
-    mc = mma.fill.f16 0.0f;
-    foreach {iv_k} in [cdiv(K, TILE_K)] {
-      tma.copy.swiz<128>
-        lhs.chunkat(block_m, iv_k) => lhs_s;
-      tma.copy.swiz<128>
-        rhs.chunkat(block_n, iv_k) => rhs_s;
-      foreach {iv} in [cdiv(TILE_K, WARP_K)] {
-        parallel p by 1 : group-4 {
-          ma = mma.load.swiz<128>
-                 lhs_s.chunkat(_, iv);
-          mb = mma.load.swiz<128>
-                 rhs_s.chunkat(_, iv);
-          mma.row.row mc, ma, mb;
-        }
-      }
-    }
-    mma.store mc, output.chunkat(block_m,
-                                 block_n);
-  }
-}
-```
+  <span class="hl-kw">parallel</span> <span class="hl-pu">{</span>block_m<span class="hl-pu">,</span> block_n<span class="hl-pu">}</span>
+    <span class="hl-kw">by</span> <span class="hl-pu">[</span><span class="hl-kw">cdiv</span><span class="hl-pu">(</span>M<span class="hl-pu">,</span> WARP_M<span class="hl-pu">)</span><span class="hl-pu">,</span> <span class="hl-kw">cdiv</span><span class="hl-pu">(</span>N<span class="hl-pu">,</span> WARP_N<span class="hl-pu">)</span><span class="hl-pu">]</span>
+    <span class="hl-op">:</span> <span class="hl-st">block</span> <span class="hl-pu">{</span>
+    <span class="hl-st">shared</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>WARP_M<span class="hl-pu">,</span> TILE_K<span class="hl-pu">]</span> lhs_s<span class="hl-pu">;</span>
+    <span class="hl-st">shared</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>WARP_N<span class="hl-pu">,</span> TILE_K<span class="hl-pu">]</span> rhs_s<span class="hl-pu">;</span>
+    mc <span class="hl-op">=</span> <span class="hl-fn">mma</span><span class="hl-pu">.</span><span class="hl-fn">fill</span>.<span class="hl-ty">f16</span> <span class="hl-nu">0.0f</span><span class="hl-pu">;</span>
+    <span class="hl-kw">foreach</span> <span class="hl-pu">{</span>iv_k<span class="hl-pu">}</span> <span class="hl-kw">in</span> <span class="hl-pu">[</span><span class="hl-kw">cdiv</span><span class="hl-pu">(</span>K<span class="hl-pu">,</span> TILE_K<span class="hl-pu">)</span><span class="hl-pu">]</span> <span class="hl-pu">{</span>
+      <span class="hl-fn">tma</span><span class="hl-pu">.</span><span class="hl-fn">copy</span><span class="hl-pu">.</span><span class="hl-fn">swiz</span><span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span>
+        lhs<span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>block_m<span class="hl-pu">,</span> iv_k<span class="hl-pu">)</span> <span class="hl-op">=&gt;</span> lhs_s<span class="hl-pu">;</span>
+      <span class="hl-fn">tma</span><span class="hl-pu">.</span><span class="hl-fn">copy</span><span class="hl-pu">.</span><span class="hl-fn">swiz</span><span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span>
+        rhs<span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>block_n<span class="hl-pu">,</span> iv_k<span class="hl-pu">)</span> <span class="hl-op">=&gt;</span> rhs_s<span class="hl-pu">;</span>
+      <span class="hl-kw">foreach</span> <span class="hl-pu">{</span>iv<span class="hl-pu">}</span> <span class="hl-kw">in</span> <span class="hl-pu">[</span><span class="hl-kw">cdiv</span><span class="hl-pu">(</span>TILE_K<span class="hl-pu">,</span> WARP_K<span class="hl-pu">)</span><span class="hl-pu">]</span> <span class="hl-pu">{</span>
+        <span class="hl-kw">parallel</span> p <span class="hl-kw">by</span> <span class="hl-nu">1</span> <span class="hl-op">:</span> <span class="hl-st">group</span><span class="hl-op">-</span><span class="hl-nu">4</span> <span class="hl-pu">{</span>
+          ma <span class="hl-op">=</span> <span class="hl-fn">mma</span><span class="hl-pu">.</span><span class="hl-fn">load</span><span class="hl-pu">.</span><span class="hl-fn">swiz</span><span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span>
+                 lhs_s<span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>_<span class="hl-pu">,</span> iv<span class="hl-pu">)</span><span class="hl-pu">;</span>
+          mb <span class="hl-op">=</span> <span class="hl-fn">mma</span><span class="hl-pu">.</span><span class="hl-fn">load</span><span class="hl-pu">.</span><span class="hl-fn">swiz</span><span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span>
+                 rhs_s<span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>_<span class="hl-pu">,</span> iv<span class="hl-pu">)</span><span class="hl-pu">;</span>
+          <span class="hl-fn">mma</span><span class="hl-pu">.</span><span class="hl-fn">row</span><span class="hl-pu">.</span><span class="hl-fn">row</span> mc<span class="hl-pu">,</span> ma<span class="hl-pu">,</span> mb<span class="hl-pu">;</span>
+        <span class="hl-pu">}</span>
+      <span class="hl-pu">}</span>
+    <span class="hl-pu">}</span>
+    <span class="hl-fn">mma</span><span class="hl-pu">.</span><span class="hl-fn">store</span> mc<span class="hl-pu">,</span> output<span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>block_m<span class="hl-pu">,</span>
+                                 block_n<span class="hl-pu">)</span><span class="hl-pu">;</span>
+  <span class="hl-pu">}</span>
+<span class="hl-pu">}</span></code></pre></div>
 
 **Generated CUDA/CuTe — same kernel (180+ LOC)**
 
-```
-__global__ void __choreo_device_matmul(
-    f16* lhs, f16* rhs, f16* output,
-    unsigned K, unsigned M, unsigned N,
-    const __grid_constant__
-      CUtensorMap __choreo_tma_0_tensor_map,
-    const __grid_constant__
-      CUtensorMap __choreo_tma_1_tensor_map,
-    const __grid_constant__
-      CUtensorMap __choreo_tma_2_tensor_map) {
-  auto wg_barrier =
-    cooperative_groups::tiled_partition<128>(
-      cooperative_groups::this_thread_block());
-  __shared__ cuda::barrier<
-    cuda::thread_scope_block>
-      choreo_copy_atom_t_0_barrier;
-  if (__CHOREO_BLOCK_SINGLE__) {
-    init(&choreo_copy_atom_t_0_barrier,
-         blockDim.x);
-    cde::fence_proxy_async_shared_cta();
-  }
-  __syncthreads();
-  // ... TMA barrier setup x3 ...
-  // ... shared memory allocation ...
-  // ... fragment initialization ...
-  // ... TMA load orchestration ...
-  // ... WGMMA descriptor creation ...
-  // ... warpgroup synchronization ...
-  // ... 180+ lines total ...
-}
-```
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.cu</span></div><pre><code><span class="hl-kw">__global__</span> <span class="hl-kw">void</span> __choreo_device_matmul<span class="hl-pu">(</span>
+    f16<span class="hl-op">*</span> lhs<span class="hl-pu">,</span> f16<span class="hl-op">*</span> rhs<span class="hl-pu">,</span> f16<span class="hl-op">*</span> output<span class="hl-pu">,</span>
+    <span class="hl-kw">unsigned</span> K<span class="hl-pu">,</span> <span class="hl-kw">unsigned</span> M<span class="hl-pu">,</span> <span class="hl-kw">unsigned</span> N<span class="hl-pu">,</span>
+    <span class="hl-kw">const</span> __grid_constant__
+      CUtensorMap __choreo_tma_0_tensor_map<span class="hl-pu">,</span>
+    <span class="hl-kw">const</span> __grid_constant__
+      CUtensorMap __choreo_tma_1_tensor_map<span class="hl-pu">,</span>
+    <span class="hl-kw">const</span> __grid_constant__
+      CUtensorMap __choreo_tma_2_tensor_map<span class="hl-pu">)</span> <span class="hl-pu">{</span>
+  <span class="hl-kw">auto</span> wg_barrier <span class="hl-op">=</span>
+    cooperative_groups<span class="hl-op">:</span><span class="hl-op">:</span>tiled_partition<span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span><span class="hl-pu">(</span>
+      cooperative_groups<span class="hl-op">:</span><span class="hl-op">:</span>this_thread_block<span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">)</span><span class="hl-pu">;</span>
+  <span class="hl-kw">__shared__</span> cuda<span class="hl-op">:</span><span class="hl-op">:</span>barrier<span class="hl-op">&lt;</span>
+    cuda<span class="hl-op">:</span><span class="hl-op">:</span>thread_scope_block<span class="hl-op">&gt;</span>
+      choreo_copy_atom_t_0_barrier<span class="hl-pu">;</span>
+  <span class="hl-kw">if</span> <span class="hl-pu">(</span>__CHOREO_BLOCK_SINGLE__<span class="hl-pu">)</span> <span class="hl-pu">{</span>
+    init<span class="hl-pu">(</span><span class="hl-op">&amp;</span>choreo_copy_atom_t_0_barrier<span class="hl-pu">,</span>
+         blockDim.x<span class="hl-pu">)</span><span class="hl-pu">;</span>
+    cde<span class="hl-op">:</span><span class="hl-op">:</span>fence_proxy_async_shared_cta<span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">;</span>
+  <span class="hl-pu">}</span>
+  <span class="hl-kw">__syncthreads</span><span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">;</span>
+  <span class="hl-cm">// ... TMA barrier setup x3 ...</span>
+  <span class="hl-cm">// ... shared memory allocation ...</span>
+  <span class="hl-cm">// ... fragment initialization ...</span>
+  <span class="hl-cm">// ... TMA load orchestration ...</span>
+  <span class="hl-cm">// ... WGMMA descriptor creation ...</span>
+  <span class="hl-cm">// ... warpgroup synchronization ...</span>
+  <span class="hl-cm">// ... 180+ lines total ...</span>
+<span class="hl-pu">}</span></code></pre></div>
 
 ---
 
@@ -128,44 +124,40 @@ __global__ void __choreo_device_matmul(
 
 Tensors carry shape, data type, and memory space as part of the declaration. No manual pointer arithmetic.
 
-```
-// Dense GEMM: 2D tensors with named dims
-__co__ void matmul(
-    global f16 [M, K] lhs,
-    global f16 [N, K] rhs,
-    global f16 [M, N] output)
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.co</span><span class="editor-badge">CROKTILE</span></div><pre><code><span class="hl-cm">// Dense GEMM: 2D tensors with named dims</span>
+<span class="hl-kw">__co__</span> <span class="hl-ty">void</span> matmul<span class="hl-pu">(</span>
+    <span class="hl-st">global</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>M<span class="hl-pu">,</span> K<span class="hl-pu">]</span> lhs<span class="hl-pu">,</span>
+    <span class="hl-st">global</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>N<span class="hl-pu">,</span> K<span class="hl-pu">]</span> rhs<span class="hl-pu">,</span>
+    <span class="hl-st">global</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>M<span class="hl-pu">,</span> N<span class="hl-pu">]</span> output<span class="hl-pu">)</span>
 
-// BMM: 3D batched tensors
-__co__ void bmm(
-    global bf16 [B, M, K] lhs,
-    global bf16 [B, N, K] rhs,
-    global f32  [B, M, N] output)
+<span class="hl-cm">// BMM: 3D batched tensors</span>
+<span class="hl-kw">__co__</span> <span class="hl-ty">void</span> bmm<span class="hl-pu">(</span>
+    <span class="hl-st">global</span> <span class="hl-ty">bf16</span> <span class="hl-pu">[</span>B<span class="hl-pu">,</span> M<span class="hl-pu">,</span> K<span class="hl-pu">]</span> lhs<span class="hl-pu">,</span>
+    <span class="hl-st">global</span> <span class="hl-ty">bf16</span> <span class="hl-pu">[</span>B<span class="hl-pu">,</span> N<span class="hl-pu">,</span> K<span class="hl-pu">]</span> rhs<span class="hl-pu">,</span>
+    <span class="hl-st">global</span> <span class="hl-ty">f32</span>  <span class="hl-pu">[</span>B<span class="hl-pu">,</span> M<span class="hl-pu">,</span> N<span class="hl-pu">]</span> output<span class="hl-pu">)</span>
 
-// Shared memory: typed + shaped
-shared f16 [WARP_M, TILE_K] lhs_s;
-```
+<span class="hl-cm">// Shared memory: typed + shaped</span>
+<span class="hl-st">shared</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>WARP_M<span class="hl-pu">,</span> TILE_K<span class="hl-pu">]</span> lhs_s<span class="hl-pu">;</span></code></pre></div>
 
 **CUDA — raw pointers + manual offsets**
 
 All shape information is implicit. Buffer boundaries must be tracked manually. Off-by-one bugs are silent.
 
-```
-__global__ void matmul(
-    f16* lhs, f16* rhs, f16* output,
-    unsigned K, unsigned M, unsigned N,
-    const __grid_constant__
-      CUtensorMap tma_0, ...)
-{
-  // manual shared memory allocation
-  __shared__ alignas(1024)
-    unsigned char anon_1[24576];
-  f16* lhs_s = (f16*)(anon_1 + 16384);
-  f16* rhs_s = (f16*)(anon_1 + 0);
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.cu</span></div><pre><code><span class="hl-kw">__global__</span> <span class="hl-kw">void</span> matmul<span class="hl-pu">(</span>
+    f16<span class="hl-op">*</span> lhs<span class="hl-pu">,</span> f16<span class="hl-op">*</span> rhs<span class="hl-pu">,</span> f16<span class="hl-op">*</span> output<span class="hl-pu">,</span>
+    <span class="hl-kw">unsigned</span> K<span class="hl-pu">,</span> <span class="hl-kw">unsigned</span> M<span class="hl-pu">,</span> <span class="hl-kw">unsigned</span> N<span class="hl-pu">,</span>
+    <span class="hl-kw">const</span> __grid_constant__
+      CUtensorMap tma_0<span class="hl-pu">,</span> ...<span class="hl-pu">)</span>
+<span class="hl-pu">{</span>
+  <span class="hl-cm">// manual shared memory allocation</span>
+  <span class="hl-kw">__shared__</span> alignas<span class="hl-pu">(</span><span class="hl-nu">1024</span><span class="hl-pu">)</span>
+    <span class="hl-kw">unsigned</span> <span class="hl-kw">char</span> anon_1<span class="hl-pu">[</span><span class="hl-nu">24576</span><span class="hl-pu">]</span><span class="hl-pu">;</span>
+  f16<span class="hl-op">*</span> lhs_s <span class="hl-op">=</span> <span class="hl-pu">(</span>f16<span class="hl-op">*</span><span class="hl-pu">)</span><span class="hl-pu">(</span>anon_1 <span class="hl-op">+</span> <span class="hl-nu">16384</span><span class="hl-pu">)</span><span class="hl-pu">;</span>
+  f16<span class="hl-op">*</span> rhs_s <span class="hl-op">=</span> <span class="hl-pu">(</span>f16<span class="hl-op">*</span><span class="hl-pu">)</span><span class="hl-pu">(</span>anon_1 <span class="hl-op">+</span> <span class="hl-nu">0</span><span class="hl-pu">)</span><span class="hl-pu">;</span>
 
-  // manual offset arithmetic
-  output[row * N + col] = ...;
-}
-```
+  <span class="hl-cm">// manual offset arithmetic</span>
+  output<span class="hl-pu">[</span>row <span class="hl-op">*</span> N <span class="hl-op">+</span> col<span class="hl-pu">]</span> <span class="hl-op">=</span> ...<span class="hl-pu">;</span>
+<span class="hl-pu">}</span></code></pre></div>
 
 ---
 
@@ -177,44 +169,40 @@ __global__ void matmul(
 
 TMA (Tensor Memory Accelerator) loads are a single instruction. Shape, swizzle, and async barriers are handled automatically.
 
-```
-// TMA load: global → shared (1 line)
-tma.copy.swiz<128>
-  lhs.chunkat(block_m, iv_k) => lhs_s;
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.co</span><span class="editor-badge">CROKTILE</span></div><pre><code><span class="hl-cm">// TMA load: global → shared (1 line)</span>
+<span class="hl-fn">tma</span><span class="hl-pu">.</span><span class="hl-fn">copy</span><span class="hl-pu">.</span><span class="hl-fn">swiz</span><span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span>
+  lhs<span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>block_m<span class="hl-pu">,</span> iv_k<span class="hl-pu">)</span> <span class="hl-op">=&gt;</span> lhs_s<span class="hl-pu">;</span>
 
-// TMA store: shared → global (1 line)
-tma.copy output_s =>
-  output.subspan(WARP_M, WARP_N)
-        .at(block_m, block_n);
+<span class="hl-cm">// TMA store: shared → global (1 line)</span>
+<span class="hl-fn">tma</span><span class="hl-pu">.</span><span class="hl-fn">copy</span> output_s <span class="hl-op">=&gt;</span>
+  output<span class="hl-pu">.</span><span class="hl-fn">subspan</span><span class="hl-pu">(</span>WARP_M<span class="hl-pu">,</span> WARP_N<span class="hl-pu">)</span>
+        <span class="hl-pu">.</span><span class="hl-fn">at</span><span class="hl-pu">(</span>block_m<span class="hl-pu">,</span> block_n<span class="hl-pu">)</span><span class="hl-pu">;</span>
 
-// DMA load: global → shared (1 line)
-lhs_s = dma.copy
-  lhs.chunkat(block_m, iv_k) => shared;
-```
+<span class="hl-cm">// DMA load: global → shared (1 line)</span>
+lhs_s <span class="hl-op">=</span> <span class="hl-fn">dma</span><span class="hl-pu">.</span><span class="hl-fn">copy</span>
+  lhs<span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>block_m<span class="hl-pu">,</span> iv_k<span class="hl-pu">)</span> <span class="hl-op">=&gt;</span> <span class="hl-st">shared</span><span class="hl-pu">;</span></code></pre></div>
 
 **CUDA — TMA descriptor setup (30+ LOC)**
 
-```
-// TMA requires manual descriptor creation
-uint64_t tma_shape[] = {K, M};
-uint64_t tma_strides[] = {(K * 2)};
-uint32_t tma_box[] = {64, 64};
-uint32_t tma_elem_strides[] = {1, 1};
-alignas(64) CUtensorMap tma_map{};
-cuTensorMapEncodeTiled(
-  &tma_map,
-  CU_TENSOR_MAP_DATA_TYPE_FLOAT16,
-  2, lhs.data(),
-  tma_shape, tma_strides,
-  tma_box, tma_elem_strides,
-  CU_TENSOR_MAP_INTERLEAVE_NONE,
-  CU_TENSOR_MAP_SWIZZLE_128B,
-  CU_TENSOR_MAP_L2_PROMOTION_NONE,
-  CU_TENSOR_MAP_FLOAT_OOB_FILL_NONE);
-// ... repeat for each tensor ...
-// ... then barrier setup ...
-// ... then async copy orchestration ...
-```
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.cu</span></div><pre><code><span class="hl-cm">// TMA requires manual descriptor creation</span>
+uint64_t tma_shape<span class="hl-pu">[</span><span class="hl-pu">]</span> <span class="hl-op">=</span> <span class="hl-pu">{</span>K<span class="hl-pu">,</span> M<span class="hl-pu">}</span><span class="hl-pu">;</span>
+uint64_t tma_strides<span class="hl-pu">[</span><span class="hl-pu">]</span> <span class="hl-op">=</span> <span class="hl-pu">{</span><span class="hl-pu">(</span>K <span class="hl-op">*</span> <span class="hl-nu">2</span><span class="hl-pu">)</span><span class="hl-pu">}</span><span class="hl-pu">;</span>
+uint32_t tma_box<span class="hl-pu">[</span><span class="hl-pu">]</span> <span class="hl-op">=</span> <span class="hl-pu">{</span><span class="hl-nu">64</span><span class="hl-pu">,</span> <span class="hl-nu">64</span><span class="hl-pu">}</span><span class="hl-pu">;</span>
+uint32_t tma_elem_strides<span class="hl-pu">[</span><span class="hl-pu">]</span> <span class="hl-op">=</span> <span class="hl-pu">{</span><span class="hl-nu">1</span><span class="hl-pu">,</span> <span class="hl-nu">1</span><span class="hl-pu">}</span><span class="hl-pu">;</span>
+alignas<span class="hl-pu">(</span><span class="hl-nu">64</span><span class="hl-pu">)</span> CUtensorMap tma_map<span class="hl-pu">{</span><span class="hl-pu">}</span><span class="hl-pu">;</span>
+cuTensorMapEncodeTiled<span class="hl-pu">(</span>
+  <span class="hl-op">&amp;</span>tma_map<span class="hl-pu">,</span>
+  CU_TENSOR_MAP_DATA_TYPE_FLOAT16<span class="hl-pu">,</span>
+  <span class="hl-nu">2</span><span class="hl-pu">,</span> lhs.data<span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">,</span>
+  tma_shape<span class="hl-pu">,</span> tma_strides<span class="hl-pu">,</span>
+  tma_box<span class="hl-pu">,</span> tma_elem_strides<span class="hl-pu">,</span>
+  CU_TENSOR_MAP_INTERLEAVE_NONE<span class="hl-pu">,</span>
+  CU_TENSOR_MAP_SWIZZLE_128B<span class="hl-pu">,</span>
+  CU_TENSOR_MAP_L2_PROMOTION_NONE<span class="hl-pu">,</span>
+  CU_TENSOR_MAP_FLOAT_OOB_FILL_NONE<span class="hl-pu">)</span><span class="hl-pu">;</span>
+<span class="hl-cm">// ... repeat for each tensor ...</span>
+<span class="hl-cm">// ... then barrier setup ...</span>
+<span class="hl-cm">// ... then async copy orchestration ...</span></code></pre></div>
 
 ---
 
@@ -224,25 +212,23 @@ cuTensorMapEncodeTiled(
 
 CrokTile expresses GPU parallelism **declaratively** — from thread blocks to warp groups to individual threads. No manual `blockIdx`, `threadIdx`, or `__syncthreads()`.
 
-```
-// Level 1: Block-level parallelism (GEMM)
-parallel {block_m, block_n} by [cdiv(M, WARP_M), cdiv(N, WARP_N)] : block { ... }
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.co</span><span class="editor-badge">CROKTILE</span></div><pre><code><span class="hl-cm">// Level 1: Block-level parallelism (GEMM)</span>
+<span class="hl-kw">parallel</span> <span class="hl-pu">{</span>block_m<span class="hl-pu">,</span> block_n<span class="hl-pu">}</span> <span class="hl-kw">by</span> <span class="hl-pu">[</span><span class="hl-kw">cdiv</span><span class="hl-pu">(</span>M<span class="hl-pu">,</span> WARP_M<span class="hl-pu">)</span><span class="hl-pu">,</span> <span class="hl-kw">cdiv</span><span class="hl-pu">(</span>N<span class="hl-pu">,</span> WARP_N<span class="hl-pu">)</span><span class="hl-pu">]</span> <span class="hl-op">:</span> <span class="hl-st">block</span> <span class="hl-pu">{</span> ... <span class="hl-pu">}</span>
 
-// Level 2: Warp-group parallelism (128 threads = 4 warps)
-parallel p by 1 : group-4 { ... }
+<span class="hl-cm">// Level 2: Warp-group parallelism (128 threads = 4 warps)</span>
+<span class="hl-kw">parallel</span> p <span class="hl-kw">by</span> <span class="hl-nu">1</span> <span class="hl-op">:</span> <span class="hl-st">group</span><span class="hl-op">-</span><span class="hl-nu">4</span> <span class="hl-pu">{</span> ... <span class="hl-pu">}</span>
 
-// Level 3: Thread-level parallelism (BMM accumulation)
-parallel {m, n} by [WARP_M, 2] : thread { ... }
+<span class="hl-cm">// Level 3: Thread-level parallelism (BMM accumulation)</span>
+<span class="hl-kw">parallel</span> <span class="hl-pu">{</span>m<span class="hl-pu">,</span> n<span class="hl-pu">}</span> <span class="hl-kw">by</span> <span class="hl-pu">[</span>WARP_M<span class="hl-pu">,</span> <span class="hl-nu">2</span><span class="hl-pu">]</span> <span class="hl-op">:</span> <span class="hl-st">thread</span> <span class="hl-pu">{</span> ... <span class="hl-pu">}</span>
 
-// Level 4: Expert-parallel async blocks (MoE GEMM)
-parallel.async {eid, block_n} by [EXPERTS, cdiv(N, WARP_N)] : block
+<span class="hl-cm">// Level 4: Expert-parallel async blocks (MoE GEMM)</span>
+<span class="hl-kw">parallel</span><span class="hl-pu">.</span><span class="hl-fn">async</span> <span class="hl-pu">{</span>eid<span class="hl-pu">,</span> block_n<span class="hl-pu">}</span> <span class="hl-kw">by</span> <span class="hl-pu">[</span>EXPERTS<span class="hl-pu">,</span> <span class="hl-kw">cdiv</span><span class="hl-pu">(</span>N<span class="hl-pu">,</span> WARP_N<span class="hl-pu">)</span><span class="hl-pu">]</span> <span class="hl-op">:</span> <span class="hl-st">block</span>
 
-// Level 5: Warp-specialized producer/consumer (blockscale GEMM)
-parallel p1 by 2 : group-4 {
-    inthreads.async (p1 == 0) { /* TMA producer */ }
-    inthreads.async (p1 == 1) { /* WGMMA consumer */ }
-}
-```
+<span class="hl-cm">// Level 5: Warp-specialized producer/consumer (blockscale GEMM)</span>
+<span class="hl-kw">parallel</span> p1 <span class="hl-kw">by</span> <span class="hl-nu">2</span> <span class="hl-op">:</span> <span class="hl-st">group</span><span class="hl-op">-</span><span class="hl-nu">4</span> <span class="hl-pu">{</span>
+    <span class="hl-kw">inthreads</span><span class="hl-pu">.</span><span class="hl-fn">async</span> <span class="hl-pu">(</span>p1 <span class="hl-op">==</span> <span class="hl-nu">0</span><span class="hl-pu">)</span> <span class="hl-pu">{</span> <span class="hl-op">/</span><span class="hl-op">*</span> TMA producer <span class="hl-op">*</span><span class="hl-op">/</span> <span class="hl-pu">}</span>
+    <span class="hl-kw">inthreads</span><span class="hl-pu">.</span><span class="hl-fn">async</span> <span class="hl-pu">(</span>p1 <span class="hl-op">==</span> <span class="hl-nu">1</span><span class="hl-pu">)</span> <span class="hl-pu">{</span> <span class="hl-op">/</span><span class="hl-op">*</span> WGMMA consumer <span class="hl-op">*</span><span class="hl-op">/</span> <span class="hl-pu">}</span>
+<span class="hl-pu">}</span></code></pre></div>
 
 > In CUDA, each of these patterns requires hundreds of lines of barrier management, index calculations, and synchronization primitives.
 
@@ -252,35 +238,33 @@ parallel p1 by 2 : group-4 {
 
 Every CrokTile kernel follows the **same canonical pipeline** — the language ensures you can't skip steps or misorder operations.
 
-```
-__co__ void kernel(global f16 [M, K] lhs, ...) {
-  // 1. PARTITION — declare parallel tile decomposition
-  parallel {block_m, block_n} by [...] : block {
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.co</span><span class="editor-badge">CROKTILE</span></div><pre><code><span class="hl-kw">__co__</span> <span class="hl-ty">void</span> kernel<span class="hl-pu">(</span><span class="hl-st">global</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>M<span class="hl-pu">,</span> K<span class="hl-pu">]</span> lhs<span class="hl-pu">,</span> ...<span class="hl-pu">)</span> <span class="hl-pu">{</span>
+  <span class="hl-cm">// 1. PARTITION — declare parallel tile decomposition</span>
+  <span class="hl-kw">parallel</span> <span class="hl-pu">{</span>block_m<span class="hl-pu">,</span> block_n<span class="hl-pu">}</span> <span class="hl-kw">by</span> <span class="hl-pu">[</span>...<span class="hl-pu">]</span> <span class="hl-op">:</span> <span class="hl-st">block</span> <span class="hl-pu">{</span>
 
-    // 2. ALLOCATE — typed shared memory tiles
-    shared f16 [WARP_M, TILE_K] tile_s;
+    <span class="hl-cm">// 2. ALLOCATE — typed shared memory tiles</span>
+    <span class="hl-st">shared</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>WARP_M<span class="hl-pu">,</span> TILE_K<span class="hl-pu">]</span> tile_s<span class="hl-pu">;</span>
 
-    // 3. INITIALIZE — accumulator setup
-    mc = mma.fill.f16 0.0f;
+    <span class="hl-cm">// 3. INITIALIZE — accumulator setup</span>
+    mc <span class="hl-op">=</span> <span class="hl-fn">mma</span><span class="hl-pu">.</span><span class="hl-fn">fill</span>.<span class="hl-ty">f16</span> <span class="hl-nu">0.0f</span><span class="hl-pu">;</span>
 
-    // 4. ITERATE — tile over reduction dimension
-    foreach {iv_k} in [cdiv(K, TILE_K)] {
+    <span class="hl-cm">// 4. ITERATE — tile over reduction dimension</span>
+    <span class="hl-kw">foreach</span> <span class="hl-pu">{</span>iv_k<span class="hl-pu">}</span> <span class="hl-kw">in</span> <span class="hl-pu">[</span><span class="hl-kw">cdiv</span><span class="hl-pu">(</span>K<span class="hl-pu">,</span> TILE_K<span class="hl-pu">)</span><span class="hl-pu">]</span> <span class="hl-pu">{</span>
 
-      // 5. LOAD — tma/dma copy global → shared
-      tma.copy.swiz<128> lhs.chunkat(...) => tile_s;
+      <span class="hl-cm">// 5. LOAD — tma/dma copy global → shared</span>
+      <span class="hl-fn">tma</span><span class="hl-pu">.</span><span class="hl-fn">copy</span><span class="hl-pu">.</span><span class="hl-fn">swiz</span><span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span> lhs<span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>...<span class="hl-pu">)</span> <span class="hl-op">=&gt;</span> tile_s<span class="hl-pu">;</span>
 
-      // 6. COMPUTE — MMA on warp group
-      parallel p by 1 : group-4 {
-        ma = mma.load.swiz<128> tile_s.chunkat(...);
-        mma.row.row mc, ma, mb;
-      }
-    }
-    // 7. STORE — accumulator → shared → global
-    mma.store mc, output_s;
-    tma.copy output_s => output.subspan(...).at(...);
-  }
-}
-```
+      <span class="hl-cm">// 6. COMPUTE — MMA on warp group</span>
+      <span class="hl-kw">parallel</span> p <span class="hl-kw">by</span> <span class="hl-nu">1</span> <span class="hl-op">:</span> <span class="hl-st">group</span><span class="hl-op">-</span><span class="hl-nu">4</span> <span class="hl-pu">{</span>
+        ma <span class="hl-op">=</span> <span class="hl-fn">mma</span><span class="hl-pu">.</span><span class="hl-fn">load</span><span class="hl-pu">.</span><span class="hl-fn">swiz</span><span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span> tile_s<span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>...<span class="hl-pu">)</span><span class="hl-pu">;</span>
+        <span class="hl-fn">mma</span><span class="hl-pu">.</span><span class="hl-fn">row</span><span class="hl-pu">.</span><span class="hl-fn">row</span> mc<span class="hl-pu">,</span> ma<span class="hl-pu">,</span> mb<span class="hl-pu">;</span>
+      <span class="hl-pu">}</span>
+    <span class="hl-pu">}</span>
+    <span class="hl-cm">// 7. STORE — accumulator → shared → global</span>
+    <span class="hl-fn">mma</span><span class="hl-pu">.</span><span class="hl-fn">store</span> mc<span class="hl-pu">,</span> output_s<span class="hl-pu">;</span>
+    <span class="hl-fn">tma</span><span class="hl-pu">.</span><span class="hl-fn">copy</span> output_s <span class="hl-op">=&gt;</span> output<span class="hl-pu">.</span><span class="hl-fn">subspan</span><span class="hl-pu">(</span>...<span class="hl-pu">)</span><span class="hl-pu">.</span><span class="hl-fn">at</span><span class="hl-pu">(</span>...<span class="hl-pu">)</span><span class="hl-pu">;</span>
+  <span class="hl-pu">}</span>
+<span class="hl-pu">}</span></code></pre></div>
 
 ---
 
@@ -288,26 +272,24 @@ __co__ void kernel(global f16 [M, K] lhs, ...) {
 
 CrokTile kernels live alongside standard C++ code. The host API uses familiar C++ patterns — no FFI, no bindings, no serialization.
 
-```cpp
-// Host code: allocate typed tensors (C++ standard library style)
-auto lhs_h = choreo::make_spandata<choreo::f16>(M, K);
-auto rhs_h = choreo::make_spandata<choreo::f16>(N, K);
-lhs_h.fill_random(0, 2);
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.cu</span></div><pre><code><span class="hl-cm">// Host code: allocate typed tensors (C++ standard library style)</span>
+<span class="hl-kw">auto</span> lhs_h <span class="hl-op">=</span> choreo<span class="hl-op">:</span><span class="hl-op">:</span>make_spandata<span class="hl-op">&lt;</span>choreo<span class="hl-op">:</span><span class="hl-op">:</span>f16<span class="hl-op">&gt;</span><span class="hl-pu">(</span>M<span class="hl-pu">,</span> K<span class="hl-pu">)</span><span class="hl-pu">;</span>
+<span class="hl-kw">auto</span> rhs_h <span class="hl-op">=</span> choreo<span class="hl-op">:</span><span class="hl-op">:</span>make_spandata<span class="hl-op">&lt;</span>choreo<span class="hl-op">:</span><span class="hl-op">:</span>f16<span class="hl-op">&gt;</span><span class="hl-pu">(</span>N<span class="hl-pu">,</span> K<span class="hl-pu">)</span><span class="hl-pu">;</span>
+lhs_h.fill_random<span class="hl-pu">(</span><span class="hl-nu">0</span><span class="hl-pu">,</span> <span class="hl-nu">2</span><span class="hl-pu">)</span><span class="hl-pu">;</span>
 
-// Create device views (zero-copy span wrappers)
-auto lhs_d = choreo::make_spanview<choreo::f16, 2>(a_d, {M, K});
-auto rhs_d = choreo::make_spanview<choreo::f16, 2>(b_d, {N, K});
+<span class="hl-cm">// Create device views (zero-copy span wrappers)</span>
+<span class="hl-kw">auto</span> lhs_d <span class="hl-op">=</span> choreo<span class="hl-op">:</span><span class="hl-op">:</span>make_spanview<span class="hl-op">&lt;</span>choreo<span class="hl-op">:</span><span class="hl-op">:</span>f16<span class="hl-pu">,</span> <span class="hl-nu">2</span><span class="hl-op">&gt;</span><span class="hl-pu">(</span>a_d<span class="hl-pu">,</span> <span class="hl-pu">{</span>M<span class="hl-pu">,</span> K<span class="hl-pu">}</span><span class="hl-pu">)</span><span class="hl-pu">;</span>
+<span class="hl-kw">auto</span> rhs_d <span class="hl-op">=</span> choreo<span class="hl-op">:</span><span class="hl-op">:</span>make_spanview<span class="hl-op">&lt;</span>choreo<span class="hl-op">:</span><span class="hl-op">:</span>f16<span class="hl-pu">,</span> <span class="hl-nu">2</span><span class="hl-op">&gt;</span><span class="hl-pu">(</span>b_d<span class="hl-pu">,</span> <span class="hl-pu">{</span>N<span class="hl-pu">,</span> K<span class="hl-pu">}</span><span class="hl-pu">)</span><span class="hl-pu">;</span>
 
-// Call __co__ kernel like any C++ function
-matmul(lhs_d, rhs_d, res_d);
+<span class="hl-cm">// Call __co__ kernel like any C++ function</span>
+matmul<span class="hl-pu">(</span>lhs_d<span class="hl-pu">,</span> rhs_d<span class="hl-pu">,</span> res_d<span class="hl-pu">)</span><span class="hl-pu">;</span>
 
-// Built-in profiling
-choreo::TimerOption topt{.warmup = 10, .repeat = 500};
-auto avg_ms = choreo::timing(
-    [&]() { matmul(lhs_d, rhs_d, res_d); cudaDeviceSynchronize(); },
-    topt);
-std::cout << "TFLOPS: " << (2.0*M*N*K / (avg_ms/1e3)) / 1e12 << "\n";
-```
+<span class="hl-cm">// Built-in profiling</span>
+choreo<span class="hl-op">:</span><span class="hl-op">:</span>TimerOption topt<span class="hl-pu">{</span>.warmup <span class="hl-op">=</span> <span class="hl-nu">10</span><span class="hl-pu">,</span> .repeat <span class="hl-op">=</span> <span class="hl-nu">500</span><span class="hl-pu">}</span><span class="hl-pu">;</span>
+<span class="hl-kw">auto</span> avg_ms <span class="hl-op">=</span> choreo<span class="hl-op">:</span><span class="hl-op">:</span>timing<span class="hl-pu">(</span>
+    <span class="hl-pu">[</span><span class="hl-op">&amp;</span><span class="hl-pu">]</span><span class="hl-pu">(</span><span class="hl-pu">)</span> <span class="hl-pu">{</span> matmul<span class="hl-pu">(</span>lhs_d<span class="hl-pu">,</span> rhs_d<span class="hl-pu">,</span> res_d<span class="hl-pu">)</span><span class="hl-pu">;</span> cudaDeviceSynchronize<span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">;</span> <span class="hl-pu">}</span><span class="hl-pu">,</span>
+    topt<span class="hl-pu">)</span><span class="hl-pu">;</span>
+std<span class="hl-op">:</span><span class="hl-op">:</span>cout <span class="hl-op">&lt;&lt;</span> <span class="hl-sr">&quot;TFLOPS: &quot;</span> <span class="hl-op">&lt;&lt;</span> <span class="hl-pu">(</span><span class="hl-nu">2.0</span><span class="hl-op">*</span>M<span class="hl-op">*</span>N<span class="hl-op">*</span>K <span class="hl-op">/</span> <span class="hl-pu">(</span>avg_ms<span class="hl-op">/</span><span class="hl-nu">1e3</span><span class="hl-pu">)</span><span class="hl-pu">)</span> <span class="hl-op">/</span> <span class="hl-nu">1e12</span> <span class="hl-op">&lt;&lt;</span> <span class="hl-sr">&quot;\n&quot;</span><span class="hl-pu">;</span></code></pre></div>
 
 > CrokTile compiles to CUDA/CuTe via `choreo -gs -t cute -arch=sm_90a`, producing standard `.cu` files that work with `nvcc` and CUTLASS.
 
@@ -331,28 +313,26 @@ Best of all competitors: Triton / CuTe / Cutile / Helion
 
 From real production kernels — these constraints are enforced by the compiler, not discovered after hours of debugging:
 
-```
-// matmul_f16_dyn_sm90.co
-#if MATMUL_SWIZ != (2 * MATMUL_TILE_K)
-#error "MATMUL_SWIZ must equal 2 * MATMUL_TILE_K
-        for f16 kernel"
-#endif
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.co</span><span class="editor-badge">CROKTILE</span></div><pre><code><span class="hl-cm">// matmul_f16_dyn_sm90.co</span>
+<span class="hl-kw">#if</span><span class="hl-sr"> MATMUL_SWIZ != (2 * MATMUL_TILE_K)</span>
+<span class="hl-kw">#error</span><span class="hl-sr"> &quot;MATMUL_SWIZ must equal 2 * MATMUL_TILE_K</span>
+        <span class="hl-kw">for</span> <span class="hl-ty">f16</span> kernel<span class="hl-sr">&quot;</span>
+<span class="hl-kw">#endif</span><span class="hl-sr"></span>
 
-#if MATMUL_SWIZ != 32 && MATMUL_SWIZ != 64 \
-    && MATMUL_SWIZ != 128
-#error "MATMUL_SWIZ must be one of 32, 64, 128"
-#endif
+<span class="hl-kw">#if</span><span class="hl-sr"> MATMUL_SWIZ != 32 &amp;&amp; MATMUL_SWIZ != 64 \</span>
+    <span class="hl-op">&amp;&amp;</span> MATMUL_SWIZ <span class="hl-op">!=</span> <span class="hl-nu">128</span>
+<span class="hl-kw">#error</span><span class="hl-sr"> &quot;MATMUL_SWIZ must be one of 32, 64, 128&quot;</span>
+<span class="hl-kw">#endif</span><span class="hl-sr"></span>
 
-#if MATMUL_WARP_M != 64
-#error "MATMUL_WARP_M must be 64 for f16
-        WGMMA constraints"
-#endif
+<span class="hl-kw">#if</span><span class="hl-sr"> MATMUL_WARP_M != 64</span>
+<span class="hl-kw">#error</span><span class="hl-sr"> &quot;MATMUL_WARP_M must be 64 for f16</span>
+        WGMMA constraints<span class="hl-sr">&quot;</span>
+<span class="hl-kw">#endif</span><span class="hl-sr"></span>
 
-#if MATMUL_WARP_K != 16
-#error "MATMUL_WARP_K must be 16 for f16
-        WGMMA constraints"
-#endif
-```
+<span class="hl-kw">#if</span><span class="hl-sr"> MATMUL_WARP_K != 16</span>
+<span class="hl-kw">#error</span><span class="hl-sr"> &quot;MATMUL_WARP_K must be 16 for f16</span>
+        WGMMA constraints<span class="hl-sr">&quot;</span>
+<span class="hl-kw">#endif</span><span class="hl-sr"></span></code></pre></div>
 
 **In CUDA/CuTe — these are silent bugs**
 
@@ -372,24 +352,20 @@ Wrong tiling parameters in CUDA don't cause compile errors. They produce:
 CrokTile provides **two layers of protection**: compile-time tiling checks AND auto-generated runtime validation.
 
 **Layer 1: Compile-Time** (covered previously)
-```
-#error "MATMUL_WARP_M must be 64 for f16 WGMMA constraints"
-#error "MATMUL_SWIZ must equal 2 * MATMUL_TILE_K for f16 kernel"
-```
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.co</span><span class="editor-badge">CROKTILE</span></div><pre><code><span class="hl-kw">#error</span><span class="hl-sr"> &quot;MATMUL_WARP_M must be 64 for f16 WGMMA constraints&quot;</span>
+<span class="hl-kw">#error</span><span class="hl-sr"> &quot;MATMUL_SWIZ must equal 2 * MATMUL_TILE_K for f16 kernel&quot;</span></code></pre></div>
 
 **Layer 2: Auto-Generated Runtime Checks** (from generated CuTe output)
-```cpp
-// Automatically generated shape consistency checks
-choreo::runtime_check(lhs.shape()[1] == rhs.shape()[1],
-    "The shapes of the 1st parameter (dim: 1) and the 2nd parameter (dim: 1) "
-    "are inconsistent.");
-choreo::runtime_check(lhs.shape()[0] == output.shape()[0],
-    "The shapes of the 1st parameter (dim: 0) and the 3rd parameter (dim: 0) "
-    "are inconsistent.");
-choreo::runtime_check(rhs.shape()[0] == output.shape()[1],
-    "The shapes of the 2nd parameter (dim: 0) and the 3rd parameter (dim: 1) "
-    "are inconsistent.");
-```
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.cu</span></div><pre><code><span class="hl-cm">// Automatically generated shape consistency checks</span>
+choreo<span class="hl-op">:</span><span class="hl-op">:</span>runtime_check<span class="hl-pu">(</span>lhs.shape<span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">[</span><span class="hl-nu">1</span><span class="hl-pu">]</span> <span class="hl-op">==</span> rhs.shape<span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">[</span><span class="hl-nu">1</span><span class="hl-pu">]</span><span class="hl-pu">,</span>
+    <span class="hl-sr">&quot;The shapes of the 1st parameter (dim: 1) and the 2nd parameter (dim: 1) &quot;</span>
+    <span class="hl-sr">&quot;are inconsistent.&quot;</span><span class="hl-pu">)</span><span class="hl-pu">;</span>
+choreo<span class="hl-op">:</span><span class="hl-op">:</span>runtime_check<span class="hl-pu">(</span>lhs.shape<span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">[</span><span class="hl-nu">0</span><span class="hl-pu">]</span> <span class="hl-op">==</span> output.shape<span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">[</span><span class="hl-nu">0</span><span class="hl-pu">]</span><span class="hl-pu">,</span>
+    <span class="hl-sr">&quot;The shapes of the 1st parameter (dim: 0) and the 3rd parameter (dim: 0) &quot;</span>
+    <span class="hl-sr">&quot;are inconsistent.&quot;</span><span class="hl-pu">)</span><span class="hl-pu">;</span>
+choreo<span class="hl-op">:</span><span class="hl-op">:</span>runtime_check<span class="hl-pu">(</span>rhs.shape<span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">[</span><span class="hl-nu">0</span><span class="hl-pu">]</span> <span class="hl-op">==</span> output.shape<span class="hl-pu">(</span><span class="hl-pu">)</span><span class="hl-pu">[</span><span class="hl-nu">1</span><span class="hl-pu">]</span><span class="hl-pu">,</span>
+    <span class="hl-sr">&quot;The shapes of the 2nd parameter (dim: 0) and the 3rd parameter (dim: 1) &quot;</span>
+    <span class="hl-sr">&quot;are inconsistent.&quot;</span><span class="hl-pu">)</span><span class="hl-pu">;</span></code></pre></div>
 
 > No other GPU programming framework generates both layers automatically. In Triton or CUDA, shape mismatches produce silent wrong results.
 
@@ -413,42 +389,38 @@ First of its kind — best of all competitors
 
 Dimensions are `#define` constants. Every new size requires recompilation. Shared memory is fixed.
 
-```
-#define M 4096
-#define N 2048
-#define K 2048
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.co</span><span class="editor-badge">CROKTILE</span></div><pre><code><span class="hl-kw">#define</span><span class="hl-sr"> M 4096</span>
+<span class="hl-kw">#define</span><span class="hl-sr"> N 2048</span>
+<span class="hl-kw">#define</span><span class="hl-sr"> K 2048</span>
 
-__co__ auto matmul(
-    f16 [M, K] lhs,
-    f16 [N, K] rhs) {
-  f16 [M, N] output{0.0f};
-  int TILE_M = 32, TILE_N = 32;
-  // ...
-}
-```
+<span class="hl-kw">__co__</span> <span class="hl-kw">auto</span> matmul<span class="hl-pu">(</span>
+    <span class="hl-ty">f16</span> <span class="hl-pu">[</span>M<span class="hl-pu">,</span> K<span class="hl-pu">]</span> lhs<span class="hl-pu">,</span>
+    <span class="hl-ty">f16</span> <span class="hl-pu">[</span>N<span class="hl-pu">,</span> K<span class="hl-pu">]</span> rhs<span class="hl-pu">)</span> <span class="hl-pu">{</span>
+  <span class="hl-ty">f16</span> <span class="hl-pu">[</span>M<span class="hl-pu">,</span> N<span class="hl-pu">]</span> output<span class="hl-pu">{</span><span class="hl-nu">0.0f</span><span class="hl-pu">}</span><span class="hl-pu">;</span>
+  <span class="hl-ty">int</span> TILE_M <span class="hl-op">=</span> <span class="hl-nu">32</span><span class="hl-pu">,</span> TILE_N <span class="hl-op">=</span> <span class="hl-nu">32</span><span class="hl-pu">;</span>
+  <span class="hl-cm">// ...</span>
+<span class="hl-pu">}</span></code></pre></div>
 
 **Dynamic shapes — resolved at runtime**
 
 Dimensions are **symbolic parameters**. One compilation serves all sizes. Shared memory adapts automatically.
 
-```
-__co__ void matmul(
-    global f16 [M, K] lhs,
-    global f16 [N, K] rhs,
-    global f16 [M, N] output) {
-  // M, N, K are runtime values
-  parallel {block_m, block_n}
-    by [cdiv(M, WARP_M), cdiv(N, WARP_N)]
-    : block {
-    shared f16 [WARP_M, TILE_K] lhs_s;
-    // shared memory size adapts to tiles
-    // ...
-  }
-}
-// Called with any M, N, K at runtime:
-// matmul(lhs_2048, rhs_2048, res_2048);
-// matmul(lhs_4096, rhs_8192, res_4096);
-```
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.co</span><span class="editor-badge">CROKTILE</span></div><pre><code><span class="hl-kw">__co__</span> <span class="hl-ty">void</span> matmul<span class="hl-pu">(</span>
+    <span class="hl-st">global</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>M<span class="hl-pu">,</span> K<span class="hl-pu">]</span> lhs<span class="hl-pu">,</span>
+    <span class="hl-st">global</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>N<span class="hl-pu">,</span> K<span class="hl-pu">]</span> rhs<span class="hl-pu">,</span>
+    <span class="hl-st">global</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>M<span class="hl-pu">,</span> N<span class="hl-pu">]</span> output<span class="hl-pu">)</span> <span class="hl-pu">{</span>
+  <span class="hl-cm">// M, N, K are runtime values</span>
+  <span class="hl-kw">parallel</span> <span class="hl-pu">{</span>block_m<span class="hl-pu">,</span> block_n<span class="hl-pu">}</span>
+    <span class="hl-kw">by</span> <span class="hl-pu">[</span><span class="hl-kw">cdiv</span><span class="hl-pu">(</span>M<span class="hl-pu">,</span> WARP_M<span class="hl-pu">)</span><span class="hl-pu">,</span> <span class="hl-kw">cdiv</span><span class="hl-pu">(</span>N<span class="hl-pu">,</span> WARP_N<span class="hl-pu">)</span><span class="hl-pu">]</span>
+    <span class="hl-op">:</span> <span class="hl-st">block</span> <span class="hl-pu">{</span>
+    <span class="hl-st">shared</span> <span class="hl-ty">f16</span> <span class="hl-pu">[</span>WARP_M<span class="hl-pu">,</span> TILE_K<span class="hl-pu">]</span> lhs_s<span class="hl-pu">;</span>
+    <span class="hl-cm">// shared memory size adapts to tiles</span>
+    <span class="hl-cm">// ...</span>
+  <span class="hl-pu">}</span>
+<span class="hl-pu">}</span>
+<span class="hl-cm">// Called with any M, N, K at runtime:</span>
+<span class="hl-cm">// matmul(lhs_2048, rhs_2048, res_2048);</span>
+<span class="hl-cm">// matmul(lhs_4096, rhs_8192, res_4096);</span></code></pre></div>
 
 ---
 
@@ -458,28 +430,26 @@ __co__ void matmul(
 
 CrokTile provides a rich set of **view and slicing operators** that work on both static and dynamic tensors — all bounds-checked and type-safe.
 
-```
-// chunkat — tile a tensor into fixed-size chunks, index by tile coordinate
-lhs_load_s = tma.copy.swiz<128> lhs.chunkat(block_m, iv_k) => shared;
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.co</span><span class="editor-badge">CROKTILE</span></div><pre><code><span class="hl-cm">// chunkat — tile a tensor into fixed-size chunks, index by tile coordinate</span>
+lhs_load_s <span class="hl-op">=</span> <span class="hl-fn">tma</span><span class="hl-pu">.</span><span class="hl-fn">copy</span><span class="hl-pu">.</span><span class="hl-fn">swiz</span><span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span> lhs<span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>block_m<span class="hl-pu">,</span> iv_k<span class="hl-pu">)</span> <span class="hl-op">=&gt;</span> <span class="hl-st">shared</span><span class="hl-pu">;</span>
 
-// subspan — create a sub-view with explicit tile shape
-tma.copy output_s => output.subspan(WARP_M, WARP_N).at(block_m, block_n);
+<span class="hl-cm">// subspan — create a sub-view with explicit tile shape</span>
+<span class="hl-fn">tma</span><span class="hl-pu">.</span><span class="hl-fn">copy</span> output_s <span class="hl-op">=&gt;</span> output<span class="hl-pu">.</span><span class="hl-fn">subspan</span><span class="hl-pu">(</span>WARP_M<span class="hl-pu">,</span> WARP_N<span class="hl-pu">)</span><span class="hl-pu">.</span><span class="hl-fn">at</span><span class="hl-pu">(</span>block_m<span class="hl-pu">,</span> block_n<span class="hl-pu">)</span><span class="hl-pu">;</span>
 
-// view + from — dynamic window into a tensor (MoE expert segments)
-dma.copy.swiz<128>.zfill
-  lhs.view(WARP_M, TILE_K).from(seg_start + iv_m * WARP_M, iv_k * TILE_K)
-    => sA.subspan(TILE_M, TILE_K);
+<span class="hl-cm">// view + from — dynamic window into a tensor (MoE expert segments)</span>
+<span class="hl-fn">dma</span><span class="hl-pu">.</span><span class="hl-fn">copy</span><span class="hl-pu">.</span><span class="hl-fn">swiz</span><span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span><span class="hl-pu">.</span><span class="hl-fn">zfill</span>
+  lhs<span class="hl-pu">.</span><span class="hl-fn">view</span><span class="hl-pu">(</span>WARP_M<span class="hl-pu">,</span> TILE_K<span class="hl-pu">)</span><span class="hl-pu">.</span><span class="hl-fn">from</span><span class="hl-pu">(</span>seg_start <span class="hl-op">+</span> iv_m <span class="hl-op">*</span> WARP_M<span class="hl-pu">,</span> iv_k <span class="hl-op">*</span> TILE_K<span class="hl-pu">)</span>
+    <span class="hl-op">=&gt;</span> sA<span class="hl-pu">.</span><span class="hl-fn">subspan</span><span class="hl-pu">(</span>TILE_M<span class="hl-pu">,</span> TILE_K<span class="hl-pu">)</span><span class="hl-pu">;</span>
 
-// span_as — reshape without copy (BMM: collapse batch dim)
-ma = mma.load.swizzle<128>
-  lhs_load_s.span_as([WARP_M, TILE_SIZE_K]).chunkat(_, iv_warp);
+<span class="hl-cm">// span_as — reshape without copy (BMM: collapse batch dim)</span>
+ma <span class="hl-op">=</span> <span class="hl-fn">mma</span><span class="hl-pu">.</span><span class="hl-fn">load</span><span class="hl-pu">.</span><span class="hl-fn">swizzle</span><span class="hl-op">&lt;</span><span class="hl-nu">128</span><span class="hl-op">&gt;</span>
+  lhs_load_s<span class="hl-pu">.</span><span class="hl-fn">span_as</span><span class="hl-pu">(</span><span class="hl-pu">[</span>WARP_M<span class="hl-pu">,</span> TILE_SIZE_K<span class="hl-pu">]</span><span class="hl-pu">)</span><span class="hl-pu">.</span><span class="hl-fn">chunkat</span><span class="hl-pu">(</span>_<span class="hl-pu">,</span> iv_warp<span class="hl-pu">)</span><span class="hl-pu">;</span>
 
-// at — scalar element access
-output.at(block_b, block_m # m, block_n # (n # ni)) += result;
+<span class="hl-cm">// at — scalar element access</span>
+output<span class="hl-pu">.</span><span class="hl-fn">at</span><span class="hl-pu">(</span>block_b<span class="hl-pu">,</span> block_m # m<span class="hl-pu">,</span> block_n # <span class="hl-pu">(</span>n # ni<span class="hl-pu">)</span><span class="hl-pu">)</span> <span class="hl-op">+</span><span class="hl-op">=</span> result<span class="hl-pu">;</span>
 
-// # operator — hierarchical index composition (block + warp + thread)
-block_m # iv_warp_m # iv_thr_m # thr_m   // composes to a global index
-```
+<span class="hl-cm">// # operator — hierarchical index composition (block + warp + thread)</span>
+block_m # iv_warp_m # iv_thr_m # thr_m   <span class="hl-cm">// composes to a global index</span></code></pre></div>
 
 > In CUDA, each of these requires manual pointer arithmetic with error-prone offset calculations.
 
@@ -523,18 +493,14 @@ CrokTile's compiler messages are **tailored for AI understanding** — guiding p
 
 **Compile-time messages tell the AI agent exactly what to fix:**
 
-```
-error: "MATMUL_WARP_M must be 64 for f16 WGMMA constraints"
-error: "MATMUL_SWIZ must equal 2 * MATMUL_TILE_K for f16 kernel"
-error: "MATMUL_WARP_K must be 32 for f8 WGMMA constraints"
-```
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.cu</span></div><pre><code>error<span class="hl-op">:</span> <span class="hl-sr">&quot;MATMUL_WARP_M must be 64 for f16 WGMMA constraints&quot;</span>
+error<span class="hl-op">:</span> <span class="hl-sr">&quot;MATMUL_SWIZ must equal 2 * MATMUL_TILE_K for f16 kernel&quot;</span>
+error<span class="hl-op">:</span> <span class="hl-sr">&quot;MATMUL_WARP_K must be 32 for f8 WGMMA constraints&quot;</span></code></pre></div>
 
 **Runtime checks validate shapes with actionable diagnostics:**
 
-```
-runtime_check failed: "The shapes of the 1st parameter (dim: 1)
-  and the 2nd parameter (dim: 1) are inconsistent."
-```
+<div class="editor"><div class="editor-header"><div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="editor-filename">kernel.cu</span></div><pre><code>runtime_check failed<span class="hl-op">:</span> <span class="hl-sr">&quot;The shapes of the 1st parameter (dim: 1)</span>
+  and the <span class="hl-nu">2</span>nd parameter <span class="hl-pu">(</span>dim<span class="hl-op">:</span> <span class="hl-nu">1</span><span class="hl-pu">)</span> are inconsistent.<span class="hl-sr">&quot;</span></code></pre></div>
 
 **Result: 200+ iterations without a single silent failure**
 
