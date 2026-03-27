@@ -1,0 +1,5 @@
+allowLocalFiles: true
+themeSet: ./themes/
+html: true
+browser: chrome
+browserTimeout: 120

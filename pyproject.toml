@@ -1,0 +1,14 @@
+[project]
+name = "croktile-slides"
+version = "0.1.0"
+description = "CrokTile presentation slides - AI-driven generation with Marp"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+build-slides = "scripts.build:main"
+
+[dependency-groups]
+dev = [
+    "playwright>=1.58.0",
+]

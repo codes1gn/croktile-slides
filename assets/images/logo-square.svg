@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#b8f0d8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7de8b8;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="croc" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5cb85c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3a8a3a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="chip" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a5568;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2d3748;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect x="16" y="16" width="480" height="480" rx="80" ry="80" fill="url(#bg)"/>
+
+  <!-- Grid pattern (tiles) - subtle background -->
+  <g opacity="0.12" stroke="#2d6a2d" stroke-width="1.5" fill="none">
+    <line x1="128" y1="16" x2="128" y2="496"/>
+    <line x1="256" y1="16" x2="256" y2="496"/>
+    <line x1="384" y1="16" x2="384" y2="496"/>
+    <line x1="16" y1="128" x2="496" y2="128"/>
+    <line x1="16" y1="256" x2="496" y2="256"/>
+    <line x1="16" y1="384" x2="496" y2="384"/>
+  </g>
+
+  <!-- Crocodile eye - the central icon (like logo 3's single eye motif) -->
+  <!-- Outer eye shape - diamond/rhombus form echoing "tile" -->
+  <g transform="translate(256, 220)">
+    <!-- Eye outer shape - angular, reptilian -->
+    <path d="M-120,0 C-80,-70 -30,-95 0,-95 C30,-95 80,-70 120,0 C80,70 30,95 0,95 C-30,95 -80,70 -120,0 Z"
+          fill="url(#croc)" stroke="#2d6a2d" stroke-width="4"/>
+    <!-- Eye white/iris area -->
+    <ellipse cx="0" cy="0" rx="55" ry="60" fill="#d4f5d4"/>
+    <!-- Iris -->
+    <ellipse cx="0" cy="0" rx="35" ry="55" fill="#3a8a3a"/>
+    <!-- Pupil - vertical slit (reptilian) -->
+    <ellipse cx="0" cy="0" rx="12" ry="48" fill="#1a3a1a"/>
+    <!-- Eye highlight -->
+    <ellipse cx="-12" cy="-18" rx="8" ry="10" fill="white" opacity="0.7"/>
+    <ellipse cx="8" cy="12" rx="4" ry="5" fill="white" opacity="0.3"/>
+  </g>
+
+  <!-- GPU chip icon - bottom right area -->
+  <g transform="translate(370, 380)">
+    <rect x="-32" y="-32" width="64" height="64" rx="6" fill="url(#chip)" stroke="#1a202c" stroke-width="2"/>
+    <!-- Chip pins -->
+    <g fill="#4a5568" stroke="#1a202c" stroke-width="1">
+      <rect x="-12" y="-42" width="8" height="12" rx="1"/>
+      <rect x="4" y="-42" width="8" height="12" rx="1"/>
+      <rect x="-12" y="30" width="8" height="12" rx="1"/>
+      <rect x="4" y="30" width="8" height="12" rx="1"/>
+      <rect x="-42" y="-12" width="12" height="8" rx="1"/>
+      <rect x="-42" y="4" width="12" height="8" rx="1"/>
+      <rect x="30" y="-12" width="12" height="8" rx="1"/>
+      <rect x="30" y="4" width="12" height="8" rx="1"/>
+    </g>
+    <!-- GPU text on chip -->
+    <text x="0" y="5" text-anchor="middle" font-family="monospace" font-size="16" font-weight="bold" fill="#a0f0a0">GPU</text>
+  </g>
+
+  <!-- Small tile accents - scattered -->
+  <rect x="80" y="350" width="28" height="28" rx="4" fill="#f6ad55" opacity="0.8" transform="rotate(15, 94, 364)"/>
+  <rect x="120" y="390" width="20" height="20" rx="3" fill="#fc8181" opacity="0.7" transform="rotate(-10, 130, 400)"/>
+  <rect x="160" y="370" width="22" height="22" rx="3" fill="#63b3ed" opacity="0.7" transform="rotate(8, 171, 381)"/>
+
+  <!-- "CrokTile" text at bottom -->
+  <text x="256" y="470" text-anchor="middle" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="56" font-weight="900" fill="#1a3a2a" letter-spacing="-1">
+    <tspan fill="#1a3a2a">Crok</tspan><tspan fill="#2d6a2d">Tile</tspan>
+  </text>
+</svg>

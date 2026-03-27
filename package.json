@@ -1,0 +1,24 @@
+{
+  "name": "croktile-slides",
+  "version": "1.0.0",
+  "description": "CrokTile presentation slides powered by Marp",
+  "scripts": {
+    "build": "node scripts/build-all.js",
+    "preview": "marp --preview",
+    "watch": "marp --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codes1gn/croktile-slides.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/codes1gn/croktile-slides/issues"
+  },
+  "homepage": "https://github.com/codes1gn/croktile-slides#readme",
+  "devDependencies": {
+    "@marp-team/marp-cli": "^4.3.1"
+  }
+}

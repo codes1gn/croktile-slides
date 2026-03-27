@@ -1,0 +1,57 @@
+---
+description: CrokTile slides generation with Marp - conventions and workflow
+alwaysApply: true
+---
+
+# CrokTile Slides Repo Conventions
+
+## Project Context
+CrokTile is a GPU programming framework. This repo manages all presentation slides using Marp (Markdown -> PDF/PPTX/HTML).
+
+## Directory Structure
+- `decks/<deck-name>/slides.md` — Each slide deck lives in its own folder
+- `decks/<deck-name>/dist/` — Build outputs (PDF/PPTX/HTML), gitignored
+- `themes/` — Reusable Marp CSS themes (croktile-dark, croktile-light, croktile-cn)
+- `templates/` — Slide structure templates (tech-talk, product-pitch, weekly-report)
+- `assets/images/` — Shared images and logos
+
+## Creating a New Deck
+1. Create `decks/<deck-name>/slides.md`
+2. Use Marp frontmatter: `marp: true`, `theme: croktile-dark`, `paginate: true`
+3. Reference templates in `templates/` for structural guidance
+4. Reference logos via relative path: `![](../../assets/images/logo-square.svg)`
+
+## Available Themes
+- `croktile-dark` — Dark theme, best for tech talks and conferences
+- `croktile-light` — Light theme, best for formal/business presentations
+- `croktile-cn` — Chinese-optimized, Noto Serif SC headings, wider line-height
+
+## Marp Slide Syntax Quick Reference
+- `---` separates slides
+- `<!-- _class: lead -->` for title/centered slides
+- `<!-- _class: split -->` for two-column layout
+- `![width:300](path)` for sized images
+- `![bg](path)` for background images
+- `![bg right:40%](path)` for split background
+
+## Building / Exporting
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+# Single deck (--no-stdin required in non-interactive shells)
+npx marp --no-stdin decks/<name>/slides.md -o decks/<name>/dist/slides.html
+npx marp --no-stdin decks/<name>/slides.md -o decks/<name>/dist/slides.pdf
+npx marp --no-stdin decks/<name>/slides.md -o decks/<name>/dist/slides.pptx
+
+# Batch build all decks
+uv run python scripts/build.py
+
+# Preview with live reload
+npx marp --no-stdin decks/<name>/slides.md --preview
+```
+
+## Style Guidelines
+- Use `h1` for slide titles, `h2` for subtitles, `h3` for section labels
+- Keep slides concise: max 6-8 bullet points per slide
+- Use code blocks with language tags for syntax highlighting
+- Use tables for comparisons and metrics
+- Include CrokTile logo on title slides
