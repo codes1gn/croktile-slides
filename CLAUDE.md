@@ -1,6 +1,6 @@
 # CrokTile Slides
 
-Automated slide/presentation generation repo for **CrokTile** — a GPU programming framework.
+Presentation slides for **CrokTile** — a GPU programming framework. Built with **reveal.js**.
 
 ## Quick Start
 
@@ -8,44 +8,61 @@ Automated slide/presentation generation repo for **CrokTile** — a GPU programm
 # Ensure Node.js 20+ is on PATH
 export PATH="$HOME/.local/bin:$PATH"
 
-# Create a new deck
-mkdir -p decks/<deck-name>/dist
+# Install dependencies
+npm install
 
-# Edit decks/<deck-name>/slides.md (Marp Markdown)
+# Preview locally (open http://localhost:8000/decks/croktile-intro/)
+npm run dev
 
-# Preview with live reload
-npx marp --no-stdin decks/<deck-name>/slides.md --preview
+# Build self-contained HTML
+python3 scripts/build.py --format html
 
-# Export (--no-stdin required for non-interactive shells)
-npx marp --no-stdin decks/<deck-name>/slides.md -o decks/<deck-name>/dist/slides.pdf
-npx marp --no-stdin decks/<deck-name>/slides.md -o decks/<deck-name>/dist/slides.pptx
-npx marp --no-stdin decks/<deck-name>/slides.md -o decks/<deck-name>/dist/slides.html
+# Build PDF (requires Chrome/Chromium)
+python3 scripts/build.py --format pdf
 
-# Batch build all decks
-uv run python scripts/build.py
+# Build all formats
+python3 scripts/build.py
 ```
 
 ## Repo Structure
 
-- `decks/` — All slide decks, each in `<name>/slides.md` with `dist/` for outputs
-- `themes/` — Marp CSS themes: `croktile-dark`, `croktile-light`, `croktile-cn`
-- `templates/` — Reusable slide structures (tech-talk, product-pitch, weekly-report)
+- `decks/` — Slide decks, each in `<name>/index.html` with `dist/` for build outputs
+- `themes/` — reveal.js CSS themes: `croktile-dark`
 - `assets/images/` — Shared logos and images
-- `scripts/` — Build automation scripts
-- `.marprc.yml` — Marp CLI configuration (theme loading, local files)
+- `scripts/build.py` — Build automation (self-contained HTML + PDF export)
 
-## Themes
+## Deck Format
 
-| Theme | Best For |
-|-------|----------|
-| `croktile-dark` | Tech talks, conferences, developer audiences |
-| `croktile-light` | Business, formal presentations |
-| `croktile-cn` | Chinese-language presentations (Noto Serif SC headings) |
+Each deck is a standard reveal.js HTML file (`index.html`) that references:
+- `../../node_modules/reveal.js/` for the framework
+- `../../themes/croktile-dark.css` for styling
+- `../../assets/images/` for shared assets
+
+### Interactive Code Editor
+
+Slides use custom `editor-block` and `editor-showcase` components that match the CrokTile website's code showcase. These provide:
+- Syntax highlighting for Choreo (.co) and C++/CUDA languages
+- IDE-style window chrome (traffic light dots, filename, badge)
+- Tabbed code comparison (`.editor-showcase` with `data-tabs` JSON)
+
+### Slide Classes
+
+| Class | Purpose |
+|-------|---------|
+| `lead` | Title/closing slides (centered, gradient background) |
+| `chapter` | Chapter divider slides |
+| `split` | Two-column layout via CSS grid (use `<div class="split">`) |
+
+## Build Outputs
+
+- `dist/slides.html` — Self-contained single HTML file (all CSS/JS/images inlined)
+- `dist/slides.pdf` — PDF export via decktape
 
 ## Conventions
 
 - Deck names: lowercase-kebab-case
 - Always include CrokTile logo on title slides
-- Use `<!-- _class: lead -->` for title/closing slides
-- Keep slides concise: 6-8 bullets max per slide
-- Code blocks must have language tags
+- Use `class="lead"` for title/closing slides
+- Use `class="chapter"` for chapter dividers
+- Use `<div class="editor-block">` for code with IDE chrome
+- Use `<div class="editor-showcase">` for tabbed code comparison

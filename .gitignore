@@ -3,7 +3,7 @@ node_modules/
 __pycache__/
 *.pyc
 
-# Marp build outputs
+# Build outputs
 decks/*/dist/
 
 # OS

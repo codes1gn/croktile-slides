@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrokTile — The Next-Gen GPU & DSA Language. 5x Productivity.</title>
+  <link rel="stylesheet" href="../../node_modules/reveal.js/dist/reveal.css">
+  <link rel="stylesheet" href="../../themes/croktile-dark.css" id="theme">
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 1: Title                                         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="lead" data-background-color="#d1fae5">
+  <svg width="72" height="72" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:20px;">
+    <g transform="translate(20, 20) scale(5)">
+      <ellipse cx="20" cy="22" rx="16" ry="12" fill="#22c55e" opacity="0.9"/>
+      <path d="M32 18 Q42 14 48 18 Q42 22 32 22 Z" fill="#16a34a"/>
+      <circle cx="38" cy="17" r="2" fill="white"/>
+      <circle cx="38.5" cy="16.8" r="1" fill="#0a0a0a"/>
+      <path d="M42 18 L43 20 L44 18 L45 20 L46 18" stroke="white" stroke-width="0.8" fill="none"/>
+      <path d="M12 14 Q14 10 16 14 Q18 10 20 14 Q22 10 24 14 Q26 10 28 14" stroke="#15803b" stroke-width="1.2" fill="none"/>
+      <path d="M4 22 Q0 18 2 14" stroke="#22c55e" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <line x1="14" y1="32" x2="12" y2="38" stroke="#16a34a" stroke-width="2" stroke-linecap="round"/>
+      <line x1="26" y1="32" x2="28" y2="38" stroke="#16a34a" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <h1><span class="brand-green">Croktile</span> — The Next-Gen GPU &amp; DSA Language Achieves 5x Productivity</h1>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 2: Table of Contents                             -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Contents</h2>
+  <ul class="toc-list">
+    <li><span class="toc-num"></span><span class="toc-title">What is CrokTile?</span></li>
+    <li><span class="toc-num">01</span><span class="toc-title">Highlight 1: Easy to Use</span></li>
+    <li><span class="toc-num">02</span><span class="toc-title">Highlight 2: Compile-Time Code Safety</span></li>
+    <li><span class="toc-num">03</span><span class="toc-title">Highlight 3: Dynamic / Symbolic Shape Support</span></li>
+    <li><span class="toc-num">04</span><span class="toc-title">Highlight 4: Born for Agentic AI Programming</span></li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 3: What is CrokTile?                             -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>What is CrokTile?</h2>
+  <p>A <strong>high-level GPU programming framework</strong> that makes CUDA kernel development accessible without sacrificing performance.</p>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h3><span class="feature-icon">⚡</span> Easy to Use</h3>
+    </div>
+    <div class="feature-card">
+      <h3><span class="feature-icon">🛡️</span> Compile-Time Safety</h3>
+    </div>
+    <div class="feature-card">
+      <h3><span class="feature-icon">🔷</span> Dynamic / Symbolic Shapes</h3>
+    </div>
+    <div class="feature-card">
+      <h3><span class="feature-icon">🤖</span> Born for AI Agents</h3>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 4: Chapter 1 — Easy to Use                       -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="chapter" data-background-color="#d1fae5">
+  <h4>Chapter 1</h4>
+  <h2>Highlight 1: Easy to Use</h2>
+  <p>Best of all competitors: Triton / CuTe / Cutile / Helion</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 5: Less Code — Interactive tabbed editor          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Less Code: 40% of Equivalent CUDA</h2>
+  <div class="editor-showcase" data-tabs='[
+    {"file":"matmul.co","badge":"CROKTILE","label":"CrokTile — matmul kernel (25 LOC)","lang":"choreo","code":"__co__ void matmul(\n    global f16 [M, K] lhs,\n    global f16 [N, K] rhs,\n    global f16 [M, N] output) {\n\n  parallel {block_m, block_n}\n    by [cdiv(M, WARP_M), cdiv(N, WARP_N)]\n    : block {\n    shared f16 [WARP_M, TILE_K] lhs_s;\n    shared f16 [WARP_N, TILE_K] rhs_s;\n    mc = mma.fill.f16 0.0f;\n    foreach {iv_k} in [cdiv(K, TILE_K)] {\n      tma.copy.swiz<128>\n        lhs.chunkat(block_m, iv_k) => lhs_s;\n      tma.copy.swiz<128>\n        rhs.chunkat(block_n, iv_k) => rhs_s;\n      foreach {iv} in [cdiv(TILE_K, WARP_K)] {\n        parallel p by 1 : group-4 {\n          ma = mma.load.swiz<128>\n                 lhs_s.chunkat(_, iv);\n          mb = mma.load.swiz<128>\n                 rhs_s.chunkat(_, iv);\n          mma.row.row mc, ma, mb;\n        }\n      }\n    }\n    mma.store mc, output.chunkat(block_m,\n                                 block_n);\n  }\n}"},
+    {"file":"matmul.cu","badge":"","label":"Generated CUDA/CuTe — same kernel (180+ LOC)","lang":"cpp","code":"__global__ void __choreo_device_matmul(\n    f16* lhs, f16* rhs, f16* output,\n    unsigned K, unsigned M, unsigned N,\n    const __grid_constant__\n      CUtensorMap __choreo_tma_0_tensor_map,\n    const __grid_constant__\n      CUtensorMap __choreo_tma_1_tensor_map,\n    const __grid_constant__\n      CUtensorMap __choreo_tma_2_tensor_map) {\n  auto wg_barrier =\n    cooperative_groups::tiled_partition<128>(\n      cooperative_groups::this_thread_block());\n  __shared__ cuda::barrier<\n    cuda::thread_scope_block>\n      choreo_copy_atom_t_0_barrier;\n  if (__CHOREO_BLOCK_SINGLE__) {\n    init(&choreo_copy_atom_t_0_barrier,\n         blockDim.x);\n    cde::fence_proxy_async_shared_cta();\n  }\n  __syncthreads();\n  // ... TMA barrier setup x3 ...\n  // ... shared memory allocation ...\n  // ... fragment initialization ...\n  // ... TMA load orchestration ...\n  // ... WGMMA descriptor creation ...\n  // ... warpgroup synchronization ...\n  // ... 180+ lines total ...\n}"}
+  ]'></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 6: Tensors vs Buffers                            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Work on Tensors, Not Buffers</h2>
+  <div class="split">
+    <div>
+      <h4>CrokTile — typed tensor parameters</h4>
+      <p>Tensors carry shape, data type, and memory space as part of the declaration. No manual pointer arithmetic.</p>
+      <div class="editor-block" data-lang="choreo" data-file="kernel.co" data-badge="CROKTILE">// Dense GEMM: 2D tensors with named dims
+__co__ void matmul(
+    global f16 [M, K] lhs,
+    global f16 [N, K] rhs,
+    global f16 [M, N] output)
+
+// BMM: 3D batched tensors
+__co__ void bmm(
+    global bf16 [B, M, K] lhs,
+    global bf16 [B, N, K] rhs,
+    global f32  [B, M, N] output)
+
+// Shared memory: typed + shaped
+shared f16 [WARP_M, TILE_K] lhs_s;</div>
+    </div>
+    <div>
+      <h4>CUDA — raw pointers + manual offsets</h4>
+      <p>All shape information is implicit. Buffer boundaries must be tracked manually. Off-by-one bugs are silent.</p>
+      <div class="editor-block" data-lang="cpp" data-file="kernel.cu">__global__ void matmul(
+    f16* lhs, f16* rhs, f16* output,
+    unsigned K, unsigned M, unsigned N,
+    const __grid_constant__
+      CUtensorMap tma_0, ...)
+{
+  // manual shared memory allocation
+  __shared__ alignas(1024)
+    unsigned char anon_1[24576];
+  f16* lhs_s = (f16*)(anon_1 + 16384);
+  f16* rhs_s = (f16*)(anon_1 + 0);
+
+  // manual offset arithmetic
+  output[row * N + col] = ...;
+}</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 7: TMA/DMA                                      -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>No Manual TMA/DMA Management</h2>
+  <div class="split">
+    <div>
+      <h4>CrokTile — one-liner TMA copy</h4>
+      <p>TMA loads are a single instruction. Shape, swizzle, and async barriers are handled automatically.</p>
+      <div class="editor-block" data-lang="choreo" data-file="kernel.co" data-badge="CROKTILE">// TMA load: global → shared (1 line)
+tma.copy.swiz&lt;128&gt;
+  lhs.chunkat(block_m, iv_k) =&gt; lhs_s;
+
+// TMA store: shared → global (1 line)
+tma.copy output_s =&gt;
+  output.subspan(WARP_M, WARP_N)
+        .at(block_m, block_n);
+
+// DMA load: global → shared (1 line)
+lhs_s = dma.copy
+  lhs.chunkat(block_m, iv_k) =&gt; shared;</div>
+    </div>
+    <div>
+      <h4>CUDA — TMA descriptor setup (30+ LOC)</h4>
+      <div class="editor-block" data-lang="cpp" data-file="kernel.cu">// TMA requires manual descriptor creation
+uint64_t tma_shape[] = {K, M};
+uint64_t tma_strides[] = {(K * 2)};
+uint32_t tma_box[] = {64, 64};
+uint32_t tma_elem_strides[] = {1, 1};
+alignas(64) CUtensorMap tma_map{};
+cuTensorMapEncodeTiled(
+  &amp;tma_map,
+  CU_TENSOR_MAP_DATA_TYPE_FLOAT16,
+  2, lhs.data(),
+  tma_shape, tma_strides,
+  tma_box, tma_elem_strides,
+  CU_TENSOR_MAP_INTERLEAVE_NONE,
+  CU_TENSOR_MAP_SWIZZLE_128B,
+  CU_TENSOR_MAP_L2_PROMOTION_NONE,
+  CU_TENSOR_MAP_FLOAT_OOB_FILL_NONE);
+// ... repeat for each tensor ...
+// ... then barrier setup ...
+// ... then async copy orchestration ...</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 8: Parallel Programs                             -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Parallel Programs Made Simple</h2>
+  <p>CrokTile expresses GPU parallelism <strong>declaratively</strong> — from thread blocks to warp groups to individual threads. No manual <code>blockIdx</code>, <code>threadIdx</code>, or <code>__syncthreads()</code>.</p>
+  <div class="editor-block" data-lang="choreo" data-file="parallelism.co" data-badge="CROKTILE">// Level 1: Block-level parallelism (GEMM)
+parallel {block_m, block_n} by [cdiv(M, WARP_M), cdiv(N, WARP_N)] : block { ... }
+
+// Level 2: Warp-group parallelism (128 threads = 4 warps)
+parallel p by 1 : group-4 { ... }
+
+// Level 3: Thread-level parallelism (BMM accumulation)
+parallel {m, n} by [WARP_M, 2] : thread { ... }
+
+// Level 4: Expert-parallel async blocks (MoE GEMM)
+parallel.async {eid, block_n} by [EXPERTS, cdiv(N, WARP_N)] : block
+
+// Level 5: Warp-specialized producer/consumer (blockscale GEMM)
+parallel p1 by 2 : group-4 {
+    inthreads.async (p1 == 0) { /* TMA producer */ }
+    inthreads.async (p1 == 1) { /* WGMMA consumer */ }
+}</div>
+  <blockquote>In CUDA, each of these patterns requires hundreds of lines of barrier management, index calculations, and synchronization primitives.</blockquote>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 9: Tileflow Best Practices                       -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Best Practices Enforced by Tileflow</h2>
+  <p>Every CrokTile kernel follows the <strong>same canonical pipeline</strong> — the language ensures you can't skip steps or misorder operations.</p>
+  <div class="editor-block" data-lang="choreo" data-file="pipeline.co" data-badge="CROKTILE">__co__ void kernel(global f16 [M, K] lhs, ...) {
+  // 1. PARTITION — declare parallel tile decomposition
+  parallel {block_m, block_n} by [...] : block {
+
+    // 2. ALLOCATE — typed shared memory tiles
+    shared f16 [WARP_M, TILE_K] tile_s;
+
+    // 3. INITIALIZE — accumulator setup
+    mc = mma.fill.f16 0.0f;
+
+    // 4. ITERATE — tile over reduction dimension
+    foreach {iv_k} in [cdiv(K, TILE_K)] {
+
+      // 5. LOAD — tma/dma copy global → shared
+      tma.copy.swiz&lt;128&gt; lhs.chunkat(...) =&gt; tile_s;
+
+      // 6. COMPUTE — MMA on warp group
+      parallel p by 1 : group-4 {
+        ma = mma.load.swiz&lt;128&gt; tile_s.chunkat(...);
+        mma.row.row mc, ma, mb;
+      }
+    }
+    // 7. STORE — accumulator → shared → global
+    mma.store mc, output_s;
+    tma.copy output_s =&gt; output.subspan(...).at(...);
+  }
+}</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 10: C++ Integration                              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>C++ Integration — Works with CUTLASS/CuTe</h2>
+  <p>CrokTile kernels live alongside standard C++ code. The host API uses familiar C++ patterns — no FFI, no bindings, no serialization.</p>
+  <div class="editor-block" data-lang="cpp" data-file="host.cpp">// Host code: allocate typed tensors (C++ standard library style)
+auto lhs_h = choreo::make_spandata&lt;choreo::f16&gt;(M, K);
+auto rhs_h = choreo::make_spandata&lt;choreo::f16&gt;(N, K);
+lhs_h.fill_random(0, 2);
+
+// Create device views (zero-copy span wrappers)
+auto lhs_d = choreo::make_spanview&lt;choreo::f16, 2&gt;(a_d, {M, K});
+auto rhs_d = choreo::make_spanview&lt;choreo::f16, 2&gt;(b_d, {N, K});
+
+// Call __co__ kernel like any C++ function
+matmul(lhs_d, rhs_d, res_d);
+
+// Built-in profiling
+choreo::TimerOption topt{.warmup = 10, .repeat = 500};
+auto avg_ms = choreo::timing(
+    [&amp;]() { matmul(lhs_d, rhs_d, res_d); cudaDeviceSynchronize(); },
+    topt);
+std::cout &lt;&lt; "TFLOPS: " &lt;&lt; (2.0*M*N*K / (avg_ms/1e3)) / 1e12 &lt;&lt; "\n";</div>
+  <blockquote>CrokTile compiles to CUDA/CuTe via <code>choreo -gs -t cute -arch=sm_90a</code>, producing standard <code>.cu</code> files that work with <code>nvcc</code> and CUTLASS.</blockquote>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 11: Chapter 2 — Compile-Time Safety              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="chapter" data-background-color="#dbeafe">
+  <h4>Chapter 2</h4>
+  <h2>Highlight 2: Compile-Time Code Safety</h2>
+  <p>Best of all competitors: Triton / CuTe / Cutile / Helion</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 12: Tiling Mismatch Detection                    -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Tiling Mismatch Detection at Compile Time</h2>
+  <div class="split">
+    <div>
+      <h4>CrokTile — catches misconfigurations before GPU execution</h4>
+      <p>From real production kernels — these constraints are enforced by the compiler, not discovered after hours of debugging:</p>
+      <div class="editor-block" data-lang="choreo" data-file="matmul_f16_dyn_sm90.co" data-badge="CROKTILE">// matmul_f16_dyn_sm90.co
+#if MATMUL_SWIZ != (2 * MATMUL_TILE_K)
+#error "MATMUL_SWIZ must equal 2 * MATMUL_TILE_K
+        for f16 kernel"
+#endif
+
+#if MATMUL_SWIZ != 32 &amp;&amp; MATMUL_SWIZ != 64 \
+    &amp;&amp; MATMUL_SWIZ != 128
+#error "MATMUL_SWIZ must be one of 32, 64, 128"
+#endif
+
+#if MATMUL_WARP_M != 64
+#error "MATMUL_WARP_M must be 64 for f16
+        WGMMA constraints"
+#endif
+
+#if MATMUL_WARP_K != 16
+#error "MATMUL_WARP_K must be 16 for f16
+        WGMMA constraints"
+#endif</div>
+    </div>
+    <div>
+      <h4>In CUDA/CuTe — these are silent bugs</h4>
+      <p>Wrong tiling parameters in CUDA don't cause compile errors. They produce:</p>
+      <ul>
+        <li>Silent data corruption</li>
+        <li>Intermittent wrong results</li>
+        <li>GPU hangs with no diagnostic</li>
+        <li>Performance cliffs with no explanation</li>
+      </ul>
+      <blockquote>"The bug that takes 5 days to find in CUDA is a compile error in CrokTile."</blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 13: Runtime Checks                               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Runtime Checks — The Full Safety Net</h2>
+  <p>CrokTile provides <strong>two layers of protection</strong>: compile-time tiling checks AND auto-generated runtime validation.</p>
+  <div class="split">
+    <div>
+      <h4>Layer 1: Compile-Time</h4>
+      <div class="editor-block" data-lang="choreo" data-file="checks.co" data-badge="CROKTILE">#error "MATMUL_WARP_M must be 64 for f16 WGMMA constraints"
+#error "MATMUL_SWIZ must equal 2 * MATMUL_TILE_K for f16 kernel"</div>
+      <h4 style="margin-top:16px;">Layer 2: Auto-Generated Runtime Checks</h4>
+      <div class="editor-block" data-lang="cpp" data-file="generated.cu">// Automatically generated shape consistency checks
+choreo::runtime_check(lhs.shape()[1] == rhs.shape()[1],
+    "The shapes of the 1st parameter (dim: 1) and the 2nd parameter (dim: 1) "
+    "are inconsistent.");
+choreo::runtime_check(lhs.shape()[0] == output.shape()[0],
+    "The shapes of the 1st parameter (dim: 0) and the 3rd parameter (dim: 0) "
+    "are inconsistent.");
+choreo::runtime_check(rhs.shape()[0] == output.shape()[1],
+    "The shapes of the 2nd parameter (dim: 0) and the 3rd parameter (dim: 1) "
+    "are inconsistent.");</div>
+    </div>
+    <div>
+      <blockquote>No other GPU programming framework generates both layers automatically. In Triton or CUDA, shape mismatches produce silent wrong results.</blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 14: Chapter 3 — Dynamic Shapes                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="chapter" data-background-color="#d1fae5">
+  <h4>Chapter 3</h4>
+  <h2>Highlight 3: Dynamic / Symbolic Shape Support</h2>
+  <p>First of its kind — best of all competitors</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 15: Dynamic vs Static                            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Dynamic vs Static Shapes</h2>
+  <div class="split">
+    <div>
+      <h4>Static shapes — fixed at compile time</h4>
+      <p>Dimensions are <code>#define</code> constants. Every new size requires recompilation.</p>
+      <div class="editor-block" data-lang="choreo" data-file="static.co">#define M 4096
+#define N 2048
+#define K 2048
+
+__co__ auto matmul(
+    f16 [M, K] lhs,
+    f16 [N, K] rhs) {
+  f16 [M, N] output{0.0f};
+  int TILE_M = 32, TILE_N = 32;
+  // ...
+}</div>
+    </div>
+    <div>
+      <h4>Dynamic shapes — resolved at runtime</h4>
+      <p>Dimensions are <strong>symbolic parameters</strong>. One compilation serves all sizes.</p>
+      <div class="editor-block" data-lang="choreo" data-file="dynamic.co" data-badge="CROKTILE">__co__ void matmul(
+    global f16 [M, K] lhs,
+    global f16 [N, K] rhs,
+    global f16 [M, N] output) {
+  // M, N, K are runtime values
+  parallel {block_m, block_n}
+    by [cdiv(M, WARP_M), cdiv(N, WARP_N)]
+    : block {
+    shared f16 [WARP_M, TILE_K] lhs_s;
+    // shared memory size adapts to tiles
+    // ...
+  }
+}
+// Called with any M, N, K at runtime:
+// matmul(lhs_2048, rhs_2048, res_2048);
+// matmul(lhs_4096, rhs_8192, res_4096);</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 16: Memory Access Primitives                     -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section>
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Flexible Memory Access Primitives</h2>
+  <p>CrokTile provides a rich set of <strong>view and slicing operators</strong> that work on both static and dynamic tensors — all bounds-checked and type-safe.</p>
+  <div class="editor-block" data-lang="choreo" data-file="primitives.co" data-badge="CROKTILE">// chunkat — tile a tensor into fixed-size chunks, index by tile coordinate
+lhs_load_s = tma.copy.swiz&lt;128&gt; lhs.chunkat(block_m, iv_k) =&gt; shared;
+
+// subspan — create a sub-view with explicit tile shape
+tma.copy output_s =&gt; output.subspan(WARP_M, WARP_N).at(block_m, block_n);
+
+// view + from — dynamic window into a tensor (MoE expert segments)
+dma.copy.swiz&lt;128&gt;.zfill
+  lhs.view(WARP_M, TILE_K).from(seg_start + iv_m * WARP_M, iv_k * TILE_K)
+    =&gt; sA.subspan(TILE_M, TILE_K);
+
+// span_as — reshape without copy (BMM: collapse batch dim)
+ma = mma.load.swizzle&lt;128&gt;
+  lhs_load_s.span_as([WARP_M, TILE_SIZE_K]).chunkat(_, iv_warp);
+
+// at — scalar element access
+output.at(block_b, block_m # m, block_n # (n # ni)) += result;
+
+// # operator — hierarchical index composition (block + warp + thread)
+block_m # iv_warp_m # iv_thr_m # thr_m   // composes to a global index</div>
+  <blockquote>In CUDA, each of these requires manual pointer arithmetic with error-prone offset calculations.</blockquote>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 17: Chapter 4 — AI                               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="chapter" data-background-color="#dbeafe">
+  <h4>Chapter 4</h4>
+  <h2>Highlight 4: Born for Agentic AI Programming</h2>
+  <p>Superior context engineering + superior harness engineering</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 18: Context Engineering                          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="dense">
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Superior Context Engineering — Real Results</h2>
+  <p><strong>1 AI agent + 1 CrokTile request = autonomous performance tuning</strong></p>
+  <table>
+    <thead>
+      <tr><th>Kernel</th><th>Iterations</th><th>Baseline</th><th>Best</th><th>vs Baseline</th><th>vs cuBLAS</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Dense GEMM FP16</td><td>65</td><td>208.7 TFLOPS</td><td>382.5 TFLOPS</td><td><strong>+83%</strong></td><td><strong>100.5%</strong></td></tr>
+      <tr><td>Sparse GEMM FP16</td><td>153</td><td>368 TFLOPS</td><td>655 TFLOPS</td><td><strong>+78%</strong></td><td>—</td></tr>
+      <tr><td>Blockscale GEMM FP8</td><td>71</td><td>397.9 TFLOPS</td><td>621 TFLOPS</td><td><strong>+56%</strong></td><td>—</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:16px;">
+    <h4>Why CrokTile enables this:</h4>
+    <ul>
+      <li><strong>25-line kernels</strong> fit entirely in an AI agent's context window (~500 tokens)</li>
+      <li>Clean syntax is parsable — AI agents <strong>understand</strong> the code, not just copy it</li>
+      <li>Tileflow structure guides the agent to make <strong>valid</strong> optimizations</li>
+      <li>Each iteration is a small, safe change within the compile-time safety net</li>
+    </ul>
+  </div>
+  <blockquote>The same optimization task in CUDA would require 180+ lines per kernel, 3000+ tokens of context, and manual debugging of silent bugs.</blockquote>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 19: Harness Engineering                          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="dense">
+  <img src="../../assets/images/logo-wordmark.svg" class="slide-logo-footer" alt="">
+  <h2>Superior Harness Engineering — Compiler as AI Guardrail</h2>
+  <p>CrokTile's compiler messages are <strong>tailored for AI understanding</strong> — guiding program repair and performance tuning.</p>
+  <div class="split">
+    <div>
+      <h4>Compile-time messages tell the AI exactly what to fix:</h4>
+      <div class="editor-block" data-lang="choreo" data-file="errors.co">error: "MATMUL_WARP_M must be 64 for f16 WGMMA constraints"
+error: "MATMUL_SWIZ must equal 2 * MATMUL_TILE_K for f16 kernel"
+error: "MATMUL_WARP_K must be 32 for f8 WGMMA constraints"</div>
+      <h4 style="margin-top:12px;">Runtime checks with actionable diagnostics:</h4>
+      <div class="editor-block" data-lang="cpp" data-file="runtime.cu">runtime_check failed: "The shapes of the 1st parameter (dim: 1)
+  and the 2nd parameter (dim: 1) are inconsistent."</div>
+    </div>
+    <div>
+      <h4>Result: 200+ iterations without a single silent failure</h4>
+      <table class="compact">
+        <thead><tr><th>Metric</th><th>CrokTile</th><th>CUDA</th></tr></thead>
+        <tbody>
+          <tr><td>Invalid kernel → compile error</td><td><strong>Yes</strong></td><td>No (silent bug)</td></tr>
+          <tr><td>Shape mismatch → runtime error</td><td><strong>Auto-generated</strong></td><td>Manual or absent</td></tr>
+          <tr><td>AI iterations without crash</td><td><strong>200+</strong></td><td>Frequent hangs</td></tr>
+          <tr><td>Context cost per debug cycle</td><td><strong>~0 tokens</strong></td><td>~3000+ tokens</td></tr>
+          <tr><td>AI learning curve</td><td><strong>Hours</strong></td><td>Days</td></tr>
+        </tbody>
+      </table>
+      <blockquote>The compiler is the harness — it reduces AI randomness by making invalid programs <strong>impossible to compile</strong>.</blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 20: Closing                                      -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="lead" data-background-color="#d1fae5">
+  <svg width="64" height="64" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:16px;">
+    <g transform="translate(20, 20) scale(5)">
+      <ellipse cx="20" cy="22" rx="16" ry="12" fill="#22c55e" opacity="0.9"/>
+      <path d="M32 18 Q42 14 48 18 Q42 22 32 22 Z" fill="#16a34a"/>
+      <circle cx="38" cy="17" r="2" fill="white"/>
+      <circle cx="38.5" cy="16.8" r="1" fill="#0a0a0a"/>
+      <path d="M42 18 L43 20 L44 18 L45 20 L46 18" stroke="white" stroke-width="0.8" fill="none"/>
+      <path d="M12 14 Q14 10 16 14 Q18 10 20 14 Q22 10 24 14 Q26 10 28 14" stroke="#15803b" stroke-width="1.2" fill="none"/>
+      <path d="M4 22 Q0 18 2 14" stroke="#22c55e" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <line x1="14" y1="32" x2="12" y2="38" stroke="#16a34a" stroke-width="2" stroke-linecap="round"/>
+      <line x1="26" y1="32" x2="28" y2="38" stroke="#16a34a" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <h1><span class="brand-green">Croktile</span> — Fewer Lines. Safer Kernels. AI-Ready.</h1>
+  <div class="stats-grid">
+    <div class="stat"><span class="stat-value">40%</span><span class="stat-label">of equivalent CUDA code</span></div>
+    <div class="stat"><span class="stat-value">83%</span><span class="stat-label">faster than baseline (AI-tuned)</span></div>
+    <div class="stat"><span class="stat-value">200+</span><span class="stat-label">autonomous AI iterations without failure</span></div>
+    <div class="stat"><span class="stat-value">100.5%</span><span class="stat-label">cuBLAS performance on dense GEMM</span></div>
+  </div>
+  <p style="margin-top:16px;font-size:0.7em;color:var(--fg-secondary)">github.com/croktile</p>
+</section>
+
+</div><!-- .slides -->
+</div><!-- .reveal -->
+
+<script src="../../node_modules/reveal.js/dist/reveal.js"></script>
+<script src="../../node_modules/reveal.js/dist/plugin/notes.js"></script>
+<script>
+(function() {
+  var PALETTE = {
+    keyword: "#ff7b72", type: "#79c0ff", storage: "#d2a8ff",
+    function: "#d2a8ff", string: "#a5d6ff", comment: "#8b949e",
+    number: "#79c0ff", operator: "#ff7b72", punctuation: "#8b949e",
+    default: "#e6edf3",
+  };
+
+  var CHOREO_KEYWORDS = new Set([
+    "__co__","__cok__","__real_cok__","__co_device__","__device__",
+    "parallel","by","with","in","foreach","wait","call","select",
+    "return","where","while","break","continue","if","else",
+    "vectorize","after","cdiv","inthreads","for","auto","template",
+    "inline","extern","const","constexpr","typename","sizeof",
+  ]);
+  var CHOREO_TYPES = new Set([
+    "void","bool","int","half","float","double",
+    "f64","f32","f16","bf16","f8","f8_e4m3","f8_e5m2",
+    "f8_ue4m3","f8_ue8m0","f6_e3m2","f4_e2m1","tf32",
+    "u64","s64","u32","s32","u16","s16","u8","s8",
+    "u6","s6","u4","s4","u2","s2","u1","size_t","char",
+  ]);
+  var CHOREO_STORAGE = new Set([
+    "local","shared","global","stream",
+    "block","group","group-4","thread","device","term","mutable",
+  ]);
+  var CHOREO_BUILTINS = new Set([
+    "dma","tma","mma","sync","trigger","assert","swap",
+    "rotate","print","println","frag","stage","event",
+  ]);
+  var CHOREO_METHODS = new Set([
+    "copy","transp","pad","swizzle","swiz","sp","zfill","any",
+    "async","span","span_as","mdata","data","view","from",
+    "chunkat","chunk","subspan","modspan","step","stride","at",
+    "fill","load","store","row","col","scale","commit",
+  ]);
+  var C_KEYWORDS = new Set([
+    "void","int","float","double","char","unsigned","signed",
+    "long","short","const","static","extern","inline","volatile",
+    "auto","register","return","if","else","for","while","do",
+    "switch","case","break","continue","default","goto",
+    "struct","union","enum","typedef","sizeof",
+    "__global__","__device__","__shared__","__syncthreads",
+    "__half2float","template","constexpr","typename",
+    "#pragma","unroll",
+  ]);
+
+  function tokenizeLine(line, lang) {
+    var tokens = [], pos = 0;
+    var isChoreo = lang === "choreo" || lang === "co" || lang === "";
+    var isCpp = lang === "cpp" || lang === "c" || lang === "cuda";
+    var keywords = isChoreo ? CHOREO_KEYWORDS : C_KEYWORDS;
+    while (pos < line.length) {
+      var ch = line[pos];
+      if (ch === "/" && line[pos+1] === "/") { tokens.push({text:line.slice(pos),type:"comment"}); break; }
+      if (ch === "#") {
+        var pm = line.slice(pos).match(/^#(error|define|if|endif|include|pragma|elif|else)\b/);
+        if (pm) { tokens.push({text:pm[0],type:"keyword"}); pos+=pm[0].length; tokens.push({text:line.slice(pos),type:"string"}); break; }
+      }
+      if (ch === '"') {
+        var end = pos+1;
+        while(end<line.length && line[end]!=='"'){if(line[end]==="\\")end++;end++;}
+        tokens.push({text:line.slice(pos,end+1),type:"string"}); pos=end+1; continue;
+      }
+      if (ch === "'") {
+        var end2 = pos+1;
+        while(end2<line.length && line[end2]!=="'"){if(line[end2]==="\\")end2++;end2++;}
+        tokens.push({text:line.slice(pos,end2+1),type:"string"}); pos=end2+1; continue;
+      }
+      if (/\d/.test(ch)||(ch==="."&&pos+1<line.length&&/\d/.test(line[pos+1]))) {
+        var nm = line.slice(pos).match(/^(\d+\.?\d*[fFeE]?[+-]?\d*[fF]?|0[xX][0-9a-fA-F]+)/);
+        if(nm){tokens.push({text:nm[0],type:"number"});pos+=nm[0].length;continue;}
+      }
+      if (/[a-zA-Z_]/.test(ch)) {
+        var wm = line.slice(pos).match(/^[a-zA-Z_][a-zA-Z0-9_]*/);
+        if(wm){
+          var word=wm[0], type="default";
+          if(keywords.has(word)) type="keyword";
+          else if(isChoreo&&CHOREO_TYPES.has(word)) type="type";
+          else if(isChoreo&&CHOREO_STORAGE.has(word)) type="storage";
+          else if(isChoreo&&CHOREO_BUILTINS.has(word)) type="function";
+          else if(isCpp&&C_KEYWORDS.has(word)) type="keyword";
+          tokens.push({text:word,type:type});pos+=word.length;continue;
+        }
+      }
+      if(ch==="."&&pos+1<line.length){
+        var mm=line.slice(pos+1).match(/^[a-zA-Z_][a-zA-Z0-9_]*/);
+        if(mm&&isChoreo&&CHOREO_METHODS.has(mm[0])){
+          tokens.push({text:".",type:"punctuation"});
+          tokens.push({text:mm[0],type:"function"});
+          pos+=1+mm[0].length;continue;
+        }
+      }
+      var op2=line.slice(pos).match(/^(=>|==|!=|<=|>=|&&|\|\||<<|>>|\+\+|--)/);
+      if(op2){tokens.push({text:op2[0],type:"operator"});pos+=op2[0].length;continue;}
+      if(/^[+\-*/%=<>&|!^~?:]/.test(ch)){tokens.push({text:ch,type:"operator"});pos++;continue;}
+      if(/^[{}()\[\];,]/.test(ch)){tokens.push({text:ch,type:"punctuation"});pos++;continue;}
+      tokens.push({text:ch,type:"default"});pos++;
+    }
+    return tokens;
+  }
+
+  function escapeHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+  function highlightCode(code, lang) {
+    return code.split("\n").map(function(line) {
+      return tokenizeLine(line, lang).map(function(tok) {
+        var c = PALETTE[tok.type] || PALETTE.default;
+        return '<span style="color:'+c+'">'+escapeHtml(tok.text)+'</span>';
+      }).join("");
+    }).join("\n");
+  }
+
+  function makeEditorHtml(code, lang, filename, badge) {
+    var dots = '<div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>';
+    var fnHtml = filename ? '<span class="editor-filename">'+escapeHtml(filename)+'</span>' : '';
+    var badgeHtml = badge ? '<span class="editor-badge">'+escapeHtml(badge)+'</span>' : '';
+    var highlighted = highlightCode(code, lang);
+    return '<div class="editor"><div class="editor-header">'+dots+fnHtml+badgeHtml+'</div><div class="editor-code"><pre>'+highlighted+'</pre></div></div>';
+  }
+
+  document.querySelectorAll(".editor-block").forEach(function(el) {
+    var code = el.textContent;
+    var lang = el.getAttribute("data-lang") || "choreo";
+    var file = el.getAttribute("data-file") || "";
+    var badge = el.getAttribute("data-badge") || "";
+    var html = makeEditorHtml(code, lang, file, badge);
+    var container = document.createElement("div");
+    container.innerHTML = html;
+    el.parentNode.replaceChild(container.firstChild, el);
+  });
+
+  document.querySelectorAll(".editor-showcase").forEach(function(el) {
+    var tabs = JSON.parse(el.getAttribute("data-tabs"));
+    var activeTab = 0;
+    function render() {
+      var dots = '<div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>';
+      var tabButtons = tabs.map(function(tab, i) {
+        var cls = i === activeTab ? "editor-tab active" : "editor-tab";
+        return '<button class="'+cls+'" data-idx="'+i+'">'+escapeHtml(tab.file)+'</button>';
+      }).join("");
+      var badge = tabs[activeTab].badge;
+      var badgeHtml = badge ? '<span class="editor-badge">'+escapeHtml(badge)+'</span>' : '';
+      var highlighted = highlightCode(tabs[activeTab].code, tabs[activeTab].lang);
+      var label = tabs[activeTab].label || "";
+      el.innerHTML =
+        '<div class="editor editor-tabbed">' +
+          '<div class="editor-header">' + dots +
+            '<div class="editor-tabs">' + tabButtons + '</div>' +
+            badgeHtml +
+          '</div>' +
+          '<div class="editor-body"><pre>' + highlighted + '</pre></div>' +
+          (label ? '<div class="editor-footer">'+escapeHtml(label)+'</div>' : '') +
+        '</div>';
+      el.querySelectorAll(".editor-tab").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          activeTab = parseInt(this.getAttribute("data-idx"));
+          render();
+        });
+      });
+    }
+    render();
+  });
+})();
+
+(function() {
+  // Decorative badge logos from website assets (rotate across slides)
+  var logos = [
+    "../../assets/images/logo-banner-abstract.png",
+    "../../assets/images/logo-banner-cartoon.png",
+    "../../assets/images/logo-banner-pixel.png"
+  ];
+  document.querySelectorAll(".slides > section").forEach(function(section, idx) {
+    if (section.querySelector(".slide-corner-badge")) return;
+    var badge = document.createElement("img");
+    badge.className = "slide-corner-badge";
+    badge.src = logos[idx % logos.length];
+    badge.alt = "";
+    section.appendChild(badge);
+  });
+})();
+
+Reveal.initialize({
+  hash: true,
+  slideNumber: 'c/t',
+  width: 1280,
+  height: 720,
+  margin: 0.02,
+  transition: 'slide',
+  transitionSpeed: 'default',
+  backgroundTransition: 'fade',
+  center: false,
+  plugins: [ RevealNotes ],
+  pdfSeparateFragments: false,
+});
+</script>
+</body>
+</html>

@@ -1,11 +1,12 @@
 {
   "name": "croktile-slides",
-  "version": "1.0.0",
-  "description": "CrokTile presentation slides powered by Marp",
+  "version": "2.0.0",
+  "description": "CrokTile presentation slides powered by reveal.js",
   "scripts": {
-    "build": "node scripts/build-all.js",
-    "preview": "marp --preview",
-    "watch": "marp --watch"
+    "dev": "python3 -m http.server 8000",
+    "build": "python3 scripts/build.py",
+    "build:html": "python3 scripts/build.py --format html",
+    "build:pdf": "python3 scripts/build.py --format pdf"
   },
   "repository": {
     "type": "git",
@@ -18,7 +19,10 @@
     "url": "https://github.com/codes1gn/croktile-slides/issues"
   },
   "homepage": "https://github.com/codes1gn/croktile-slides#readme",
+  "dependencies": {
+    "reveal.js": "^6.0.0"
+  },
   "devDependencies": {
-    "@marp-team/marp-cli": "^4.3.1"
+    "puppeteer": "^24.40.0"
   }
 }

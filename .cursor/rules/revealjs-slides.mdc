@@ -1,0 +1,37 @@
+---
+description: Rules for creating and editing reveal.js slide decks in this project
+globs: decks/**/*.html, themes/*.css
+alwaysApply: false
+---
+
+# CrokTile Slides — reveal.js
+
+## Structure
+- Each deck lives in `decks/<name>/index.html`
+- Build outputs go to `decks/<name>/dist/`
+- Theme CSS in `themes/croktile-dark.css`
+- Shared assets in `assets/images/`
+
+## Slide Syntax
+- Each slide is a `<section>` inside `<div class="slides">`
+- Use `class="lead"` for centered title/closing slides
+- Use `class="chapter"` for chapter divider slides
+- Use `<div class="split">` for two-column layouts
+
+## Code Blocks
+- Use `<div class="editor-block" data-lang="choreo" data-file="kernel.co" data-badge="CROKTILE">` for single code blocks with IDE chrome
+- Use `<div class="editor-showcase" data-tabs='[...]'>` for tabbed code comparison
+- Supported languages: `choreo`, `cpp`, `cuda`
+- The custom syntax highlighter runs client-side in vanilla JS
+
+## Build
+- `python3 scripts/build.py` — builds all decks (HTML + PDF)
+- `python3 scripts/build.py <deck-name>` — build specific deck
+- `python3 scripts/build.py --format html` — HTML only
+- `npm run dev` — local preview server
+
+## Style
+- Font: Inter + JetBrains Mono
+- Accent: mint green (#22c55e / #16a34a)
+- Keep slides concise: 6-8 bullets max
+- Code blocks should use editor-block for visual consistency
