@@ -849,42 +849,38 @@ int main() {
     <span class="footer-right">github.com/croktile</span>
   </div>
   <h2>Born for AI Tuning</h2>
-  <div class="feature-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin:8px 0 14px;">
-    <div class="feature-card" style="padding:10px 12px;">
-      <h3 style="font-size:0.6em;gap:6px;"><span class="feature-icon" style="background:#dcfce9;width:22px;height:22px;font-size:11px;">&#x2713;</span> Compact syntax for AI context</h3>
+  <div class="feature-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin:6px 0 10px;">
+    <div class="feature-card" style="padding:8px 10px;">
+      <h3 style="font-size:0.55em;gap:5px;"><span class="feature-icon" style="background:#dcfce9;width:20px;height:20px;font-size:10px;">&#x2713;</span> Compact syntax for AI context</h3>
     </div>
-    <div class="feature-card" style="padding:10px 12px;">
-      <h3 style="font-size:0.6em;gap:6px;"><span class="feature-icon" style="background:#dcfce9;width:22px;height:22px;font-size:11px;">&#x2713;</span> Error-prone configs hidden</h3>
+    <div class="feature-card" style="padding:8px 10px;">
+      <h3 style="font-size:0.55em;gap:5px;"><span class="feature-icon" style="background:#dcfce9;width:20px;height:20px;font-size:10px;">&#x2713;</span> Error-prone configs hidden</h3>
     </div>
-    <div class="feature-card" style="padding:10px 12px;">
-      <h3 style="font-size:0.6em;gap:6px;"><span class="feature-icon" style="background:#dcfce9;width:22px;height:22px;font-size:11px;">&#x2713;</span> CLI well-documented for agents</h3>
+    <div class="feature-card" style="padding:8px 10px;">
+      <h3 style="font-size:0.55em;gap:5px;"><span class="feature-icon" style="background:#dcfce9;width:20px;height:20px;font-size:10px;">&#x2713;</span> CLI well-documented for agents</h3>
     </div>
-    <div class="feature-card" style="padding:10px 12px;">
-      <h3 style="font-size:0.6em;gap:6px;"><span class="feature-icon" style="background:#dcfce9;width:22px;height:22px;font-size:11px;">&#x2713;</span> Compile-time guardrails</h3>
+    <div class="feature-card" style="padding:8px 10px;">
+      <h3 style="font-size:0.55em;gap:5px;"><span class="feature-icon" style="background:#dcfce9;width:20px;height:20px;font-size:10px;">&#x2713;</span> Compile-time guardrails</h3>
     </div>
   </div>
-  <div class="website-split" style="grid-template-columns:1fr 1fr;">
+  <div class="website-split" style="grid-template-columns:1.1fr 0.9fr;">
     <div>
-      <div class="editor-block" data-lang="text" data-file="ai-prompt.txt" data-badge="PROMPT" style="font-size:0.6em;">User:
-continue experiment on branch
-ai-tune/2026-03-24/gemm_sp_f16.
-Read two reference experiment branches:
-  branch 1: ai-tune/2026-03-21/gemm_sp_f16
-  branch 2: ai-tune/2026-03-21/gemm_sp_e4m3
-Branch 2 best can achieve over 1100 TFLOPS,
-branch 1 best 600+ TFLOPS. Do not directly
-copy — optimize stage over stage.
-KICK OFF EXPERIMENTS NOW.</div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:8px;">
-        <p style="font-size:0.55em;font-weight:600;color:var(--fg-secondary);margin:0 0 6px;">results.tsv &mdash; e4m3 sparse GEMM, 68 iterations</p>
-        <div style="display:flex;flex-direction:column;gap:4px;">
-          <div style="display:flex;align-items:center;gap:6px;font-size:0.5em;"><span style="width:42px;text-align:right;color:var(--fg-secondary);">baseline</span><div style="height:16px;border-radius:3px;background:var(--mint-400);width:59%;display:flex;align-items:center;padding-left:6px;color:#fff;font-weight:700;font-size:0.9em;">671</div></div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:0.5em;"><span style="width:42px;text-align:right;color:var(--fg-secondary);">iter001</span><div style="height:16px;border-radius:3px;background:var(--mint-500);width:67%;display:flex;align-items:center;padding-left:6px;color:#fff;font-weight:700;font-size:0.9em;">759</div></div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:0.5em;"><span style="width:42px;text-align:right;color:var(--fg-secondary);">iter016</span><div style="height:16px;border-radius:3px;background:var(--mint-500);width:68%;display:flex;align-items:center;padding-left:6px;color:#fff;font-weight:700;font-size:0.9em;">772</div></div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:0.5em;"><span style="width:42px;text-align:right;color:var(--fg-secondary);">iter023</span><div style="height:16px;border-radius:3px;background:var(--mint-600);width:72%;display:flex;align-items:center;padding-left:6px;color:#fff;font-weight:700;font-size:0.9em;">811</div></div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:0.5em;"><span style="width:42px;text-align:right;color:var(--fg-secondary);">iter068</span><div style="height:16px;border-radius:3px;background:var(--mint-700);width:100%;display:flex;align-items:center;padding-left:6px;color:#fff;font-weight:700;font-size:0.9em;">1127</div></div>
+      <div class="editor-showcase editor-compact" data-tabs='[
+        {"file":"AI Prompt","lang":"text","code":"User:\ncontinue experiment on branch\nai-tune/2026-03-24/gemm_sp_f16.\nRead two reference experiment branches:\n  branch 1: ai-tune/2026-03-21/gemm_sp_f16\n  branch 2: ai-tune/2026-03-21/gemm_sp_e4m3\nBranch 2 best can achieve over 1100 TFLOPS,\nbranch 1 best 600+ TFLOPS. Do not directly\ncopy — optimize stage over stage.\nKICK OFF EXPERIMENTS NOW."},
+        {"file":"AI Analysis","lang":"text","code":"AI reads reference branches and analyzes:\n\nKey insights from e4m3 branch (1128 TFLOPS):\n• TMA metadata staging: 671 → 760 (+13%)\n• Merged barrier:       760 → 767\n• Early empty signal:   767 → 772\n• SW pipelined wait<1>: 772 → 828\n• 1p2c warp spec:       828 → 895 (+9%)\n• 3-stage pipeline:     895 → 1188 (+24%)\n\nCurrent baseline: iter004 at 400.3 TFLOPS\nNCU bottleneck: Memory 67.9%, L1TEX 52.9%\nNext step: 1p2c warp specialization"},
+        {"file":"Iteration Loop","lang":"text","code":"iter105: 1p2c f16 accum → 403.4 TFLOPS\n  ✓ Verified, but only +0.8% over baseline\n  SMEM doubled (73KB → 147KB), hurts occupancy\n\niter107: uint2 metadata loads → 404.7 TFLOPS\n  ✓ Within noise of baseline — DISCARD\n  (false 131 TFLOPS reading = GPU contention)\n\niter109: Early empty signal → 419.2 TFLOPS\n  ✓ Verified, +4.7% — KEEP\n\niter110: SW pipelined metadata → 388 TFLOPS\n  ✗ Regression. WGMMA serialization — DISCARD"},
+        {"file":"Context Fit","lang":"text","code":"Why Croktile fits AI tuning:\n\nKernel:    15 lines of .co  (vs 95 CUDA lines)\nContext:   412 characters    (fits in one window)\nCompiler:  4 safety checks   (auto-generated)\nOutput:    Structured errors  (AI can parse)\nCLI:       --verbose --arch=sm_90a (documented)\nHidden:    0 error-prone configs exposed\n\nAI iterates 68 times in one session,\nreaching 1127 TFLOPS from 671 baseline.\nEach iteration: edit .co → compile → run → NCU\nAverage cycle: ~3 minutes per iteration"}
+      ]'></div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-top:6px;">
+        <p style="font-size:0.5em;font-weight:600;color:var(--fg-secondary);margin:0 0 4px;">results.tsv &mdash; e4m3 sparse GEMM, 68 iterations</p>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div style="display:flex;align-items:center;gap:5px;font-size:0.45em;"><span style="width:40px;text-align:right;color:var(--fg-secondary);">baseline</span><div style="height:14px;border-radius:3px;background:var(--mint-400);width:59%;display:flex;align-items:center;padding-left:5px;color:#fff;font-weight:700;font-size:0.9em;">671</div></div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:0.45em;"><span style="width:40px;text-align:right;color:var(--fg-secondary);">iter001</span><div style="height:14px;border-radius:3px;background:var(--mint-500);width:67%;display:flex;align-items:center;padding-left:5px;color:#fff;font-weight:700;font-size:0.9em;">759</div></div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:0.45em;"><span style="width:40px;text-align:right;color:var(--fg-secondary);">iter016</span><div style="height:14px;border-radius:3px;background:var(--mint-500);width:68%;display:flex;align-items:center;padding-left:5px;color:#fff;font-weight:700;font-size:0.9em;">772</div></div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:0.45em;"><span style="width:40px;text-align:right;color:var(--fg-secondary);">iter023</span><div style="height:14px;border-radius:3px;background:var(--mint-600);width:72%;display:flex;align-items:center;padding-left:5px;color:#fff;font-weight:700;font-size:0.9em;">811</div></div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:0.45em;"><span style="width:40px;text-align:right;color:var(--fg-secondary);">iter068</span><div style="height:14px;border-radius:3px;background:var(--mint-700);width:100%;display:flex;align-items:center;padding-left:5px;color:#fff;font-weight:700;font-size:0.9em;">1127</div></div>
         </div>
-        <p style="font-size:0.6em;font-weight:700;color:var(--mint-700);margin:6px 0 0;text-align:center;">671 &rarr; 1127 TFLOPS (+67.9%) in 68 AI-driven iterations</p>
+        <p style="font-size:0.55em;font-weight:700;color:var(--mint-700);margin:4px 0 0;text-align:center;">671 &rarr; 1127 TFLOPS (+67.9%) in 68 AI-driven iterations</p>
       </div>
     </div>
     <div class="claims">
@@ -904,15 +900,18 @@ KICK OFF EXPERIMENTS NOW.</div>
         <span class="claim-icon" style="background:#ede9fe;">&#x1F527;</span>
         <span>Well-documented CLI and <strong>structured errors</strong> for autonomous agents</span>
       </div>
-      <table class="check-table" style="margin-top:8px;font-size:0.5em;">
-        <thead><tr><th>Kernel</th><th>Iters</th><th>Baseline</th><th>Best</th><th>vs Base</th><th>vs cuBLAS</th></tr></thead>
+      <table class="check-table" style="margin-top:6px;font-size:0.45em;">
+        <thead><tr><th>Iter</th><th>TFLOPS</th><th>Eff%</th><th>Type</th><th>Key Optimization</th></tr></thead>
         <tbody>
-          <tr><td>Dense GEMM FP16</td><td>65</td><td>208.7</td><td><strong>382.5</strong></td><td><strong>+83%</strong></td><td><strong>100.5%</strong></td></tr>
-          <tr><td>Sparse GEMM FP16</td><td>153</td><td>368</td><td><strong>655</strong></td><td><strong>+78%</strong></td><td>&mdash;</td></tr>
-          <tr><td>Sparse GEMM E4M3</td><td>68</td><td>671</td><td><strong>1127</strong></td><td><strong>+67.9%</strong></td><td>&mdash;</td></tr>
-          <tr><td>Blockscale GEMM FP8</td><td>71</td><td>397.9</td><td><strong>621</strong></td><td><strong>+56%</strong></td><td>&mdash;</td></tr>
+          <tr><td><strong>baseline</strong></td><td>671</td><td>22.2%</td><td>.co</td><td>1p1c, swizzle128/128, prepack</td></tr>
+          <tr><td><strong>iter001</strong></td><td>759</td><td>25.1%</td><td>.co</td><td>TMA metadata staging</td></tr>
+          <tr><td><strong>iter016</strong></td><td>772</td><td>25.5%</td><td>.co</td><td>Early empty signal + merged barrier</td></tr>
+          <tr><td><strong>iter023</strong></td><td>811</td><td>26.8%</td><td>.cu</td><td>SW pipelined consumer + warpgroup</td></tr>
+          <tr><td><strong>iter036</strong></td><td>897</td><td>29.6%</td><td>.cu</td><td>1-producer/2-consumer warp spec</td></tr>
+          <tr><td><strong>iter068</strong></td><td><strong>1127</strong></td><td><strong>37.2%</strong></td><td>.cu</td><td>3-stage pipeline + persistent</td></tr>
         </tbody>
       </table>
+      <p style="font-size:0.45em;color:var(--fg-secondary);margin-top:4px;text-align:center;">H800 PCIe &middot; 4096&times;8192&times;8192 &middot; FP8 E4M3 Sparse GEMM &middot; Peak 3026 TFLOPS</p>
     </div>
   </div>
 </section>
