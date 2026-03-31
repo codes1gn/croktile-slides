@@ -357,6 +357,7 @@
       <div class="loc-hchart">
         <div class="loc-hbar-row"><span class="loc-hbar-label">Croktile</span><div class="loc-hbar croktile" style="width:3%"><span class="loc-hbar-value">1 L</span></div></div>
         <div class="loc-hbar-row"><span class="loc-hbar-label">TileLang</span><div class="loc-hbar tilelang" style="width:10%"><span class="loc-hbar-value">3 L</span></div></div>
+        <div class="loc-hbar-row"><span class="loc-hbar-label">Triton <span class="triton-no">✗</span></span><div class="loc-hbar triton triton-no-bar" style="width:0%"><span class="loc-hbar-value triton-no-label">N/A</span></div></div>
         <div class="loc-hbar-row"><span class="loc-hbar-label">CUTLASS</span><div class="loc-hbar cutlass" style="width:50%"><span class="loc-hbar-value">15 L</span></div></div>
         <div class="loc-hbar-row"><span class="loc-hbar-label">CUDA</span><div class="loc-hbar cuda" style="width:100%"><span class="loc-hbar-value">30 L</span></div></div>
       </div>
@@ -364,6 +365,7 @@
     <div>
       <div class="editor-showcase" data-tabs='[
         {"file":"Croktile","badge":"CROKTILE","label":"mma.row.row.sp — 1 modifier","lang":"choreo","code":"// Dense MMA (for reference)\nmma.row.row mc, ma, mb;\n\n// Sparse MMA — just add .sp\n// Metadata loaded via same mma.load\nme = mma.load.swiz<128>\n  meta_s.chunkat(_, iv);\n\nmma.row.row.sp mc, ma, mb, me;\n\n// Compiler handles:\n//   - metadata prepack optimization\n//   - warp shuffle exchange\n//   - ColumnMajorInterleaved<2> layout\n//   - Sparse constraint validation\n// All implicit. Zero user code change."},
+        {"file":"Triton ✗","badge":"","label":"Not Supported — Triton has no structured sparsity","lang":"python","code":"# ✗ Triton does NOT support\n#   structured sparse MMA\n#\n# No equivalent of mma.row.row.sp\n# No metadata handling primitives\n# No 2:4 sparsity pattern support\n#\n# Users must drop to raw PTX inline\n# assembly or use an external library\n# (e.g. CUTLASS) to access sparse\n# tensor cores.\n#\n# This is a fundamental limitation\n# of the Triton programming model."},
         {"file":"TileLang","badge":"","label":"T.gemm_sp — 3 LOC","lang":"python","code":"from tilelang.intrinsics import (\n    make_mma_swizzle_layout)\n\n# Sparse GEMM requires compressor\nC_local = T.alloc_fragment(\n    (block_M, block_N), accum_dtype)\nT.clear(C_local)\n\nfor idx in T.Pipelined(\n        T.ceildiv(K // 2, block_K),\n        num_stages=3):\n    T.copy(A_sparse[by*block_M,\n                    idx*block_K],\n           A_shared)\n    T.copy(B[idx*block_K*2,\n             bx*block_N],\n           B_shared)\n    T.copy(E[by*block_M,\n             idx*block_K // 8],\n           E_shared)\n    # Sparse MMA call\n    T.gemm_sp(\n        A_shared, B_shared,\n        C_local, E_shared)"},
         {"file":"CuTe / CUTLASS","badge":"","label":"SparseMma + metadata layout — 15 LOC","lang":"cpp","code":"// Sparse MMA atom\nusing SparseMMA = SparseMma<\n    SM80_16x8x32_F16F16F16F16_TN,\n    MMAOp_WarpSize,\n    ElementA, LayoutA_MK,\n    ElementB, LayoutB_NK,\n    ElementE, LayoutE_MK>;\n\n// Metadata layout (interleaved)\nusing LayoutE = Layout<\n    Shape<Int<M/16>, Int<K/32>, Int<2>>,\n    Stride<Int<K/16>, _1,\n           Int<M*K/32>>>;\n\n// Metadata tensor\nTensor mE = make_tensor(\n    make_gmem_ptr(E_ptr), LayoutE{});\nauto tCrE =\n    thr_mma.partition_fragment_E(mE);\n\n// Copy metadata to registers\ncopy(gE(_, _, k), tCrE);\n\n// Sparse GEMM call\ngemm(sparse_mma, tCrC, tCrA, tCrB,\n     tCrC, tCrE);"},
         {"file":"CUDA","badge":"","label":"metadata prepack + interleaved + shuffle — 30 LOC","lang":"cpp","code":"// Metadata prepack on host\nvoid prepack_metadata(\n    uint16_t* E_packed,\n    const uint16_t* E_raw,\n    int M, int K) {\n  for (int m = 0; m < M; m += 16) {\n    for (int k = 0; k < K/2; k += 16) {\n      // ColumnMajorInterleaved<2>\n      int dst_row = m / 16;\n      int dst_col = k / 16;\n      int interleaved = dst_row * 2\n          + (dst_col % 2);\n      E_packed[interleaved * (K/32)\n          + dst_col / 2]\n          = E_raw[m * (K/32) + k/16];\n    }\n  }\n}\n\n// Warp shuffle for metadata exchange\nuint32_t meta_val = E_shared[lane_id];\nmeta_val = __shfl_sync(\n    0xFFFFFFFF, meta_val,\n    (lane_id % 4) * 8\n        + (lane_id / 4), 32);\n\n// Sparse MMA PTX\nasm volatile(\n    \"mma.sp.sync.aligned\"\n    \".m16n8k32.row.col.f16.f16\"\n    \".f16.f16 {%0,%1}, {%2,%3,%4,%5},\"\n    \" {%6,%7}, {%8}, %9, 0x0;\"\n    : /* outputs */ : /* inputs */);"}
@@ -427,9 +429,9 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- SLIDE 9: Tileflow Best Practices                       -->
+<!-- SLIDE 9: Optimization Patterns in Real Kernels         -->
 <!-- ═══════════════════════════════════════════════════════ -->
-<section>
+<section class="dense">
   <div class="slide-header">
     <img src="../../assets/images/logo-2.png" alt="">
     <span class="header-title">CrokTile</span>
@@ -440,76 +442,95 @@
     <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
     <span class="footer-right">github.com/croktile</span>
   </div>
-  <h2>Best Practices Enforced by Tileflow</h2>
-  <p>Every CrokTile kernel follows the <strong>same canonical pipeline</strong> — the language ensures you can't skip steps or misorder operations.</p>
-  <div class="editor-block" data-lang="choreo" data-file="pipeline.co" data-badge="CROKTILE">__co__ void kernel(global f16 [M, K] lhs, ...) {
-  // 1. PARTITION — declare parallel tile decomposition
-  parallel {block_m, block_n} by [...] : block {
+  <h2>All GPU Optimization Patterns — Clean &amp; Composable</h2>
+  <p>Every advanced optimization technique is a <strong>first-class language construct</strong>, not boilerplate. Each pattern shown below is highlighted from real production kernels.</p>
+  <div class="editor-showcase pattern-showcase" data-tabs='[
+    {"file":"Persistent Kernel","badge":"PATTERN","label":"matmul_f16_dyn_persis_sta_sm90.co","lang":"choreo","code":"__co__ void matmul(global f16 [M, K] lhs,\n    global f16 [N, K] rhs, global f16 [M, N] output) {\n  @@int total_tiles = cdiv(M, WARP_M) * cdiv(N, WARP_N);@@\n  @@parallel block_id by NUM_SMS : block {@@\n    shared f16 [WARP_M, TILE_K] lhs_load_s;\n    shared f16 [WARP_N, TILE_K] rhs_load_s;\n    shared f16 [WARP_M, WARP_N] output_s;\n    @@foreach {tile_iter} in [cdiv(total_tiles, NUM_SMS)] {@@\n      @@tile_id = tile_iter # block_id;@@\n      @@if (tile_id < total_tiles) {@@\n        @@block_m = tile_id / cdiv(N, WARP_N);@@\n        @@block_n = tile_id % cdiv(N, WARP_N);@@\n        mc = mma.fill.f16 0.0f;\n        foreach {iv_k} in [cdiv(K, TILE_K)] {\n          tma.copy.swiz<SWIZ> lhs.subspan(...).at(block_m, iv_k) => lhs_load_s;\n          ...\n        }\n        mma.store mc, output_s;\n        tma.copy output_s => output.subspan(...).at(block_m, block_n);\n      }\n    }\n  }\n}"},
+    {"file":"Producer-Consumer","badge":"PATTERN","label":"matmul_f16_dyn_sm90_warpspec_1p2c.co","lang":"choreo","code":"__co__ void matmul(global f16 [M, K] lhs, ...) {\n  parallel {block_m, block_n} by [...] : block {\n    shared event full[STAGES], empty[STAGES];\n    shared f16 [STAGES * TILE_M, TILE_K] lhs_load_s;\n    @@parallel p1 by 3 : group-4 {@@\n      @@inthreads.async (p1 == 0) {@@\n        @@// PRODUCER: TMA loads@@\n        foreach {iv_k} in [cdiv(K, TILE_K)] {\n          stage = iv_k % STAGES;\n          @@wait empty[stage];@@\n          tma.copy.async<full[stage]>.swiz<SWIZ>\n            lhs.subspan(...).at(block_m, iv_k)\n              => lhs_load_s.subspan(...).at(stage, 0);\n          @@trigger full[stage];@@\n        }\n      }\n      @@inthreads.async (p1 > 0) {@@\n        @@// CONSUMERS: MMA compute@@\n        mc = mma.fill.f16 0.0f;\n        foreach {iv_k} in [cdiv(K, TILE_K)] {\n          stage = iv_k % STAGES;\n          @@wait full[stage];@@\n          ma = mma.load.swiz<SWIZ> lhs_load_s...;\n          mb = mma.load.swiz<SWIZ> rhs_load_s...;\n          mma.row.row mc, ma, mb;\n          mma.commit;\n          @@trigger empty[stage];@@\n        }\n      }\n    }\n  }\n}"},
+    {"file":"Pipeline (Staging)","badge":"PATTERN","label":"blockscale_gemm_e4m3_warpspec_persis_1p1c.co","lang":"choreo","code":"__co__ void blockscale_gemm(global f8_e4m3 [M, K] lhs,\n    global f32 [M, DIV_BLK_K] scale_lhs, ...) {\n  parallel block_id by NUM_SMS : block {\n    @@shared event full[STAGES], empty[STAGES];@@\n    @@shared f8_e4m3 [STAGES * WARP_M, TILE_K] lhs_load_s;@@\n    @@shared f8_e4m3 [STAGES * WARP_N, TILE_K] rhs_load_s;@@\n    foreach {tile_iter} in [cdiv(total_tiles, NUM_SMS)] {\n      parallel p1 by 2 : group-4 {\n        inthreads.async (p1 == 0) {\n          foreach {iv_k} in [cdiv(K, TILE_K)] {\n            @@stage = iv_k % STAGES;@@\n            @@wait empty[stage];@@\n            tma.copy.async<@@full[stage]@@>.swiz<SWIZ>\n              lhs...at(block_m, iv_k)\n                => lhs_load_s...at(@@stage@@, 0);\n            @@trigger full[stage];@@\n          }\n        }\n        inthreads.async (p1 == 1) {\n          foreach {iv_k} in [cdiv(K, TILE_K)] {\n            @@stage = iv_k % STAGES;@@\n            @@wait full[stage];@@\n            ...\n            @@trigger empty[stage];@@\n          }\n        }\n      }\n    }\n  }\n}"},
+    {"file":"Double Buffering","badge":"PATTERN","label":"swap / rotate — matmul-pipelined-2.co + mma_v2.co","lang":"choreo","code":"// Double buffering with swap (matmul)\n__co__ auto matmul(f16 [M, K] lhs, f16 [K, N] rhs) {\n  parallel {m, n} by [...] : block {\n    mc = mma.fill 0.0;\n    with k in K / MMA_K {\n      @@fl0 = dma.copy.async lhs => shared;@@\n      @@fr0 = dma.copy.async rhs => shared;@@\n      @@fl1 = dma.any;@@\n      @@fr1 = dma.any;@@\n      foreach k(1:) {\n        @@fl1 = dma.copy.async lhs => shared;@@\n        @@fr1 = dma.copy.async rhs => shared;@@\n        wait fl0, fr0;\n        ma = mma.load fl0.chunkat(...);\n        mb = mma.load fr0.chunkat(...);\n        mma.row.col mc, ma, mb;\n        @@swap(fl0, fl1);@@\n        @@swap(fr0, fr1);@@\n      }\n      wait fl0, fr0;\n      ma = mma.load fl0.chunkat(...);\n      mma.row.col mc, ma, mb;\n    }\n    mma.store mc, output.chunkat(...);\n  }\n}\n\n// Triple buffering with rotate\nfa = dma.copy.async input.chunkat(i) => local;\nfb = dma.copy.async input.chunkat(i+1) => local;\nfc = dma.any;\nforeach i(2:) {\n  fc = dma.copy.async input.chunkat(i) => local;\n  wait fa;\n  dma.copy fa.data => output.chunkat(i-2);\n  @@rotate(fa, fb, fc);@@\n}"},
+    {"file":"Tiling","badge":"PATTERN","label":"matmul_f16_dyn_persis_sta_sm90.co","lang":"choreo","code":"@@#define WARP_M 64@@\n@@#define WARP_N 128@@\n@@#define TILE_K 64@@\n@@#define WARP_K 16@@\n\n__co__ void matmul(global f16 [M, K] lhs,\n    global f16 [N, K] rhs, global f16 [M, N] output) {\n  int total = @@cdiv(M, WARP_M) * cdiv(N, WARP_N)@@;\n  parallel block_id by NUM_SMS : block {\n    shared f16 [@@WARP_M@@, @@TILE_K@@] lhs_load_s;\n    shared f16 [@@WARP_N@@, @@TILE_K@@] rhs_load_s;\n    shared f16 [@@WARP_M@@, @@WARP_N@@] output_s;\n    foreach {tile_iter} in [cdiv(total, NUM_SMS)] {\n      ...\n      foreach {iv_k} in [@@cdiv(K, TILE_K)@@] {\n        tma.copy.swiz<SWIZ>\n          lhs.@@subspan(WARP_M, TILE_K)@@\n            .step(@@WARP_M@@, @@TILE_K@@).at(block_m, iv_k)\n              => lhs_load_s;\n        foreach {iv_warp} in [@@cdiv(TILE_K, WARP_K)@@] {\n          parallel p by 1 : group-4 {\n            ma = mma.load.swiz<SWIZ>\n              lhs_load_s.@@chunkat@@(_, iv_warp);\n            mb = mma.load.swiz<SWIZ>\n              rhs_load_s.@@chunkat@@(_, iv_warp);\n            mma.row.row mc, ma, mb;\n          }\n        }\n      }\n    }\n  }\n}"},
+    {"file":"Swizzle","badge":"PATTERN","label":"matmul + blockscale_gemm + gemm_sp","lang":"choreo","code":"#define SWIZ 128\n\n// TMA copy with swizzle mode\ntma.copy@@.swiz<128>@@\n  lhs.subspan(WARP_M, TILE_K).at(bm, iv_k)\n    => lhs_load_s;\n\ntma.copy@@.swiz<SWIZ>@@\n  rhs.subspan(WARP_N, TILE_K).at(bn, iv_k)\n    => rhs_load_s;\n\n// Async TMA with staged events + swizzle\ntma.copy.async<full[stage]>@@.swiz<SWIZ>@@\n  lhs.subspan(TILE_M, TILE_K).at(block_m, iv_k)\n    => lhs_load_s.subspan(...).at(stage, 0);\n\n// MMA load with swizzle\nma = mma.load@@.swiz<128>@@\n  lhs_load_s.chunkat(_, iv_warp);\nmb = mma.load@@.swiz<SWIZ>@@\n  rhs_load_s.chunkat(_, iv_warp);\n\n// Sparse MMA also uses swizzle\nlhs_load_s = tma.copy@@.swiz<64>@@\n  lhs_packed.chunkat(block_m, iv_k) => shared;\nrhs_load_s = tma.copy@@.swiz<128>@@\n  rhs.chunkat(block_n, iv_k) => shared;"}
+  ]'></div>
+</section>
 
-    // 2. ALLOCATE — typed shared memory tiles
-    shared f16 [WARP_M, TILE_K] tile_s;
-
-    // 3. INITIALIZE — accumulator setup
-    mc = mma.fill.f16 0.0f;
-
-    // 4. ITERATE — tile over reduction dimension
-    foreach {iv_k} in [cdiv(K, TILE_K)] {
-
-      // 5. LOAD — tma/dma copy global → shared
-      tma.copy.swiz&lt;128&gt; lhs.chunkat(...) =&gt; tile_s;
-
-      // 6. COMPUTE — MMA on warp group
-      parallel p by 1 : group-4 {
-        ma = mma.load.swiz&lt;128&gt; tile_s.chunkat(...);
-        mma.row.row mc, ma, mb;
-      }
-    }
-    // 7. STORE — accumulator → shared → global
-    mma.store mc, output_s;
-    tma.copy output_s =&gt; output.subspan(...).at(...);
-  }
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 11: C++ Integration — Seamless Host Calling      -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="dense">
+  <div class="slide-header">
+    <img src="../../assets/images/logo-2.png" alt="">
+    <span class="header-title">CrokTile</span>
+    <span class="header-sep">|</span>
+    <span class="header-section">Chapter 1 — Easy to Use</span>
+  </div>
+  <div class="slide-footer">
+    <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
+    <span class="footer-right">github.com/croktile</span>
+  </div>
+  <h2>Seamless C++ Integration — Zero Boilerplate</h2>
+  <div class="website-split">
+    <div class="claims">
+      <div class="claim-item">
+        <span class="claim-icon">&#x1F517;</span>
+        <span>Call <code>__co__</code> kernels <strong>like ordinary C++ functions</strong> — no launch configuration, no grid/block setup</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon">&#x2699;</span>
+        <span>Compiler auto-generates <strong>host wrapper</strong>: grid dimensions, shared memory size, stream management — all hidden</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon">&#x1F504;</span>
+        <span>Automatic <strong>type conversion</strong>: <code>choreo::f16</code> ↔ <code>__half</code>, <code>choreo::f8_e4m3</code> ↔ <code>__nv_fp8_e4m3</code> — transparent to the user</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon">&#x1F4E6;</span>
+        <span>Automatic <strong>memory alignment</strong> enforcement: TMA descriptors, shared memory alignment (1024B), tensor map creation — all compiler-managed</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon">&#x1F6E1;</span>
+        <span>Auto-generated <strong>runtime shape checks</strong>: dimension consistency validated before kernel launch</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon">&#x1F4CA;</span>
+        <span>Built-in <strong>profiling harness</strong>: <code>choreo::timing()</code> with warmup, repeat, and TFLOPS calculation</span>
+      </div>
+      <blockquote style="margin-top:8px;font-size:0.75em;">Compiles to CUDA/CuTe via <code>choreo -gs -t cute -arch=sm_90a</code>, producing standard <code>.cu</code> files compatible with <code>nvcc</code> and CUTLASS.</blockquote>
+    </div>
+    <div>
+      <div class="editor-block" data-lang="choreo" data-file="matmul.co" data-badge="CROKTILE">__co__ choreo_kernel(global f16 [M,K] lhs,
+    global f16 [N,K] rhs,
+    global f16 [M,N] output) {
+  /* IMPL OF KERNEL */
 }</div>
+      <div class="editor-block" data-lang="cpp" data-file="main.cpp">// Standard C++ — no CUDA boilerplate
+#include "matmul.co"
+
+int main() {
+  auto lhs_h = choreo::make_spandata&lt;choreo::f16&gt;(M, K);
+  auto rhs_h = choreo::make_spandata&lt;choreo::f16&gt;(N, K);
+  lhs_h.fill_random(0, 2);
+
+  auto lhs_d = choreo::make_spanview&lt;choreo::f16, 2&gt;(
+      a_d, {M, K});
+  auto rhs_d = choreo::make_spanview&lt;choreo::f16, 2&gt;(
+      b_d, {N, K});
+
+  // Call kernel like any C++ function
+  choreo_kernel(lhs_d, rhs_d, res_d);
+
+  // Built-in profiling
+  choreo::TimerOption topt{.warmup=10, .repeat=500};
+  auto avg_ms = choreo::timing(
+      [&amp;]() { choreo_kernel(lhs_d, rhs_d, res_d);
+               cudaDeviceSynchronize(); }, topt);
+}</div>
+    </div>
+  </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- SLIDE 10: C++ Integration                              -->
-<!-- ═══════════════════════════════════════════════════════ -->
-<section>
-  <div class="slide-header">
-    <img src="../../assets/images/logo-2.png" alt="">
-    <span class="header-title">CrokTile</span>
-    <span class="header-sep">|</span>
-    <span class="header-section">Chapter 1 — Easy to Use</span>
-  </div>
-  <div class="slide-footer">
-    <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
-    <span class="footer-right">github.com/croktile</span>
-  </div>
-  <h2>C++ Integration — Works with CUTLASS/CuTe</h2>
-  <p>CrokTile kernels live alongside standard C++ code. The host API uses familiar C++ patterns — no FFI, no bindings, no serialization.</p>
-  <div class="editor-block" data-lang="cpp" data-file="host.cpp">// Host code: allocate typed tensors (C++ standard library style)
-auto lhs_h = choreo::make_spandata&lt;choreo::f16&gt;(M, K);
-auto rhs_h = choreo::make_spandata&lt;choreo::f16&gt;(N, K);
-lhs_h.fill_random(0, 2);
-
-// Create device views (zero-copy span wrappers)
-auto lhs_d = choreo::make_spanview&lt;choreo::f16, 2&gt;(a_d, {M, K});
-auto rhs_d = choreo::make_spanview&lt;choreo::f16, 2&gt;(b_d, {N, K});
-
-// Call __co__ kernel like any C++ function
-matmul(lhs_d, rhs_d, res_d);
-
-// Built-in profiling
-choreo::TimerOption topt{.warmup = 10, .repeat = 500};
-auto avg_ms = choreo::timing(
-    [&amp;]() { matmul(lhs_d, rhs_d, res_d); cudaDeviceSynchronize(); },
-    topt);
-std::cout &lt;&lt; "TFLOPS: " &lt;&lt; (2.0*M*N*K / (avg_ms/1e3)) / 1e12 &lt;&lt; "\n";</div>
-  <blockquote>CrokTile compiles to CUDA/CuTe via <code>choreo -gs -t cute -arch=sm_90a</code>, producing standard <code>.cu</code> files that work with <code>nvcc</code> and CUTLASS.</blockquote>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- SLIDE 11: Chapter 2 — Compile-Time Safety              -->
+<!-- SLIDE 12: Chapter 2 — Compile-Time Safety              -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <section class="chapter" data-background-color="#dbeafe">
   <h4>Chapter 2</h4>
@@ -518,9 +539,9 @@ std::cout &lt;&lt; "TFLOPS: " &lt;&lt; (2.0*M*N*K / (avg_ms/1e3)) / 1e12 &lt;&lt
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- SLIDE 12: Tiling Mismatch Detection                    -->
+<!-- SLIDE 12: Compile-Time Checks                          -->
 <!-- ═══════════════════════════════════════════════════════ -->
-<section>
+<section class="dense">
   <div class="slide-header">
     <img src="../../assets/images/logo-2.png" alt="">
     <span class="header-title">CrokTile</span>
@@ -531,42 +552,43 @@ std::cout &lt;&lt; "TFLOPS: " &lt;&lt; (2.0*M*N*K / (avg_ms/1e3)) / 1e12 &lt;&lt
     <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
     <span class="footer-right">github.com/croktile</span>
   </div>
-  <h2>Tiling Mismatch Detection at Compile Time</h2>
-  <div class="split">
-    <div>
-      <h4>CrokTile — catches misconfigurations before GPU execution</h4>
-      <p>From real production kernels — these constraints are enforced by the compiler, not discovered after hours of debugging:</p>
-      <div class="editor-block" data-lang="choreo" data-file="matmul_f16_dyn_sm90.co" data-badge="CROKTILE">// matmul_f16_dyn_sm90.co
-#if MATMUL_SWIZ != (2 * MATMUL_TILE_K)
-#error "MATMUL_SWIZ must equal 2 * MATMUL_TILE_K
-        for f16 kernel"
-#endif
-
-#if MATMUL_SWIZ != 32 &amp;&amp; MATMUL_SWIZ != 64 \
-    &amp;&amp; MATMUL_SWIZ != 128
-#error "MATMUL_SWIZ must be one of 32, 64, 128"
-#endif
-
-#if MATMUL_WARP_M != 64
-#error "MATMUL_WARP_M must be 64 for f16
-        WGMMA constraints"
-#endif
-
-#if MATMUL_WARP_K != 16
-#error "MATMUL_WARP_K must be 16 for f16
-        WGMMA constraints"
-#endif</div>
+  <h2>Compile-Time Checks to Prevent Runtime Errors</h2>
+  <div class="website-split" style="grid-template-columns:0.85fr 1.15fr;">
+    <div class="claims">
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#fee2e2;">&#x1F6AB;</span>
+        <span><strong>Shape / type mismatch</strong> — DMA copy between tensors with incompatible shapes, ranks, or element types caught at compile time</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#fef3c7;">&#x1F6A7;</span>
+        <span><strong>Out-of-bounds access</strong> — static index/offset analysis catches buffer overruns before they become silent corruption</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#dbeafe;">&#x2699;</span>
+        <span><strong>HW constraint validation</strong> — MMA shape/dtype must match hardware capabilities (e.g., SM_86 vs SM_90 instruction set)</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#ede9fe;">&#x1F504;</span>
+        <span><strong>Synchronization analysis</strong> — async futures that are never <code>wait</code>-ed are flagged at compile time, preventing deadlocks and races</span>
+      </div>
+      <div class="cuda-compare">
+        <h4 style="margin-top:10px;">In CUDA / CuTe — these are all silent bugs</h4>
+        <ul style="font-size:0.72em;margin-top:4px;">
+          <li>Shape mismatches &rarr; <strong>silent data corruption</strong></li>
+          <li>Out-of-bounds &rarr; <strong>intermittent wrong results</strong></li>
+          <li>Wrong MMA shape &rarr; <strong>GPU hang, no diagnostic</strong></li>
+          <li>Missing sync &rarr; <strong>race condition, rare crashes</strong></li>
+        </ul>
+        <blockquote style="font-size:0.72em;margin-top:6px;">"The bug that takes 5 days to find in CUDA is a compile error in CrokTile."</blockquote>
+      </div>
     </div>
     <div>
-      <h4>In CUDA/CuTe — these are silent bugs</h4>
-      <p>Wrong tiling parameters in CUDA don't cause compile errors. They produce:</p>
-      <ul>
-        <li>Silent data corruption</li>
-        <li>Intermittent wrong results</li>
-        <li>GPU hangs with no diagnostic</li>
-        <li>Performance cliffs with no explanation</li>
-      </ul>
-      <blockquote>"The bug that takes 5 days to find in CUDA is a compile error in CrokTile."</blockquote>
+      <div class="editor-showcase" data-tabs='[
+        {"file":"Shape Mismatch","badge":"ERROR","label":"illegal_dma.co — type & rank mismatch","lang":"choreo","code":"__co__ void illegal_copy(f32 [1, 2, 3] src) {\n  parallel p by 1 {\n    dma.copy src => local;\n  }\n  f16 [3, 2, 1] dst2;\n  dma.copy src => dst2;       // f32 -> f16!\n  s32 [3, 2, 1, 4] dst3;\n  dma.copy src => dst3;       // rank 3 -> 4!\n}\n\n// ───── Compiler Output ─────────────────\n// error: DMA statement contains a type\n//   mismatch: the element types of the\n//   from(f32) and to(f16) are\n//   inconsistent.\n//\n// error: DMA statement has a rank\n//   mismatch between from and to:\n//   3 != 4."},
+        {"file":"Out of Bounds","badge":"ERROR","label":"chunkat-oob.co — static index analysis","lang":"choreo","code":"__co__ void foo(s32 [77, 320] data, int i) {\n  parallel p by 2 foreach x in 3 {\n    f = dma.copy data\n      .subspan(32, 44).at(0, i) => shared;\n    f1 = dma.copy f.data\n      .modspan(18, 20).at(x, 7) => shared;\n    dma.copy f1.view([2, 2])\n      .from(101, 7) => shared;\n  }\n}\n\n// ───── Compiler Output ─────────────────\n// error: index out of bounds for\n//   dimension 1 (7 >= 2).\n//\n// error: offset out of bounds for\n//   dimension 0 (101 >= 14).\n//\n// error: offset out of bounds for\n//   dimension 1 (7 >= 4)."},
+        {"file":"HW Constraints","badge":"ERROR","label":"mma_shape.co — unsupported MMA configuration","lang":"choreo","code":"#define M 128\n#define N 256\n#define K 64\n\n__co__ auto matmul(f16 [M, K] lhs,\n                   f16 [K, N] rhs) {\n  f16 [M, N] output;\n  int MMA_M = 32, MMA_N = 32, MMA_K = 32;\n  parallel {m,n} by [M/MMA_M/4, N/MMA_N]\n    : block {\n    mc = mma.fill 0.0;\n    parallel {g0,g1} by [4, 1] : group {\n      foreach k in K / MMA_K {\n        ma = mma.load lhs.chunkat(m#g0, k);\n        mb = mma.load rhs.chunkat(k, n#g1);\n        mma.row.col mc, ma, mb;\n      }\n    }\n  }\n  return output;\n}\n\n// ───── Compiler Output ─────────────────\n// error: MMA [f16(a)f16(b)f16(c)f16(d):\n//   m32n32k32] is not support by current\n//   architecture(SM_86)."},
+        {"file":"Sync Analysis","badge":"ERROR","label":"no_wait.co — unwait-ed async futures","lang":"choreo","code":"__co__ void foo(s8 [1, 2] input) {\n  parallel p by 1 {\n    f = dma.copy.async input => global;\n    f0 = dma.any;\n    f1 = dma.any;\n    with f in [1] {\n      foreach f {\n        f1 = dma.copy.async input => local;\n        f2 = dma.copy.async input => local;\n        swap(f0, f1);\n      }\n    }\n  }\n}\n\n// ───── Compiler Output ─────────────────\n// error: some asyncs are not explicitly\n//   waited: ::foo::f, ::foo::f2.\n//\n// Totally 1 errors have been detected."}
+      ]'></div>
     </div>
   </div>
 </section>
@@ -574,7 +596,7 @@ std::cout &lt;&lt; "TFLOPS: " &lt;&lt; (2.0*M*N*K / (avg_ms/1e3)) / 1e12 &lt;&lt
 <!-- ═══════════════════════════════════════════════════════ -->
 <!-- SLIDE 13: Runtime Checks                               -->
 <!-- ═══════════════════════════════════════════════════════ -->
-<section>
+<section class="dense">
   <div class="slide-header">
     <img src="../../assets/images/logo-2.png" alt="">
     <span class="header-title">CrokTile</span>
@@ -585,27 +607,93 @@ std::cout &lt;&lt; "TFLOPS: " &lt;&lt; (2.0*M*N*K / (avg_ms/1e3)) / 1e12 &lt;&lt
     <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
     <span class="footer-right">github.com/croktile</span>
   </div>
-  <h2>Runtime Checks — The Full Safety Net</h2>
-  <p>CrokTile provides <strong>two layers of protection</strong>: compile-time tiling checks AND auto-generated runtime validation.</p>
-  <div class="split">
-    <div>
-      <h4>Layer 1: Compile-Time</h4>
-      <div class="editor-block" data-lang="choreo" data-file="checks.co" data-badge="CROKTILE">#error "MATMUL_WARP_M must be 64 for f16 WGMMA constraints"
-#error "MATMUL_SWIZ must equal 2 * MATMUL_TILE_K for f16 kernel"</div>
-      <h4 style="margin-top:16px;">Layer 2: Auto-Generated Runtime Checks</h4>
-      <div class="editor-block" data-lang="cpp" data-file="generated.cu">// Automatically generated shape consistency checks
-choreo::runtime_check(lhs.shape()[1] == rhs.shape()[1],
-    "The shapes of the 1st parameter (dim: 1) and the 2nd parameter (dim: 1) "
-    "are inconsistent.");
-choreo::runtime_check(lhs.shape()[0] == output.shape()[0],
-    "The shapes of the 1st parameter (dim: 0) and the 3rd parameter (dim: 0) "
-    "are inconsistent.");
-choreo::runtime_check(rhs.shape()[0] == output.shape()[1],
-    "The shapes of the 2nd parameter (dim: 0) and the 3rd parameter (dim: 1) "
-    "are inconsistent.");</div>
+  <h2>Auto-Generated Runtime Assertions</h2>
+  <p style="margin-top:-4px;font-size:0.7em;opacity:0.8;">When dynamic dimensions are involved, the compiler auto-generates host-side assertions &mdash; catching errors <strong>before GPU dispatch</strong></p>
+  <div class="website-split" style="grid-template-columns:0.82fr 1.18fr;">
+    <div class="claims">
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#dcfce9;">&#x1F6E1;</span>
+        <span><strong>Cross-parameter consistency</strong> &mdash; shared dims like <code>K</code> in <code>lhs[M,K]</code>, <code>rhs[K,N]</code> verified to match</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#dbeafe;">&#x1F4CF;</span>
+        <span><strong>Static shape validation</strong> &mdash; actual tensor shapes checked against compile-time constants</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#fef3c7;">&#x1F4E6;</span>
+        <span><strong>Memory budget enforcement</strong> &mdash; cumulative dynamic allocation checked against HW limits</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#ede9fe;">&#x26A1;</span>
+        <span><strong>Tiling / parallel-by validity</strong> &mdash; bounds <code>&gt; 0</code>, tile counts non-zero, no division-by-zero</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#fee2e2;">&#x1F4BE;</span>
+        <span><strong>DMA transfer size</strong> &mdash; dynamic DMA validated against HW transfer limits</span>
+      </div>
+      <div class="cuda-compare">
+        <h4 style="margin-top:4px;">In CUDA &mdash; no safety net</h4>
+        <ul style="font-size:0.65em;margin-top:0;">
+          <li>Shape mismatch &rarr; <strong>silent wrong results</strong></li>
+          <li>Memory overflow &rarr; <strong>GPU hang</strong></li>
+          <li>Zero grid dim &rarr; <strong>undefined behavior</strong></li>
+        </ul>
+      </div>
     </div>
     <div>
-      <blockquote>No other GPU programming framework generates both layers automatically. In Triton or CUDA, shape mismatches produce silent wrong results.</blockquote>
+      <div class="editor-showcase" data-tabs='[
+        {"file":"Shape Consistency","badge":"GENERATED","label":"named_dim.co — cross-parameter checks","lang":"cpp","code":"// Source: __co__ foo(s32[N,M,K] lhs,\n//    s32[M,N,N] rhs, s32[K,M] filter)\n// Compiler auto-generates:\n\nchoreo::runtime_check(\n  hp0.shape()[2] == hp2.shape()[0],\n  \"The shapes of the 1st parameter\n   (dim: 2) and the 3rd parameter\n   (dim: 0) are inconsistent.\");\n\nchoreo::runtime_check(\n  hp0.shape()[1] == hp1.shape()[0],\n  \"The shapes of the 1st parameter\n   (dim: 1) and the 2nd parameter\n   (dim: 0) are inconsistent.\");\n\nchoreo::runtime_check(\n  hp1.shape()[1] == hp1.shape()[2],\n  \"The shapes of the 2nd parameter\n   (dim: 1) and the 2nd parameter\n   (dim: 2) are inconsistent.\");"},
+        {"file":"Static Shape","badge":"GENERATED","label":"rtc_shapes.co — expected dimensions","lang":"cpp","code":"// Source: __co__ foo(\n//   f32 [3, 1, 2] input, f16 [27] b)\n// Compiler auto-generates:\n\nchoreo::runtime_check(\n  input.shape()[0] == 3,\n  \"shape inconsistent on the 1st\n   parameter (input, dim: 0)\");\n\nchoreo::runtime_check(\n  input.shape()[1] == 1,\n  \"shape inconsistent on the 1st\n   parameter (input, dim: 1)\");\n\nchoreo::runtime_check(\n  input.shape()[2] == 2,\n  \"shape inconsistent on the 1st\n   parameter (input, dim: 2)\");\n\nchoreo::runtime_check(\n  b.shape()[0] == 27,\n  \"shape inconsistent on the 2nd\n   parameter (b, dim: 0)\");"},
+        {"file":"Memory Budget","badge":"GENERATED","label":"named_dim.co — global memory limit","lang":"cpp","code":"// Source: __co__ foo(s32[N,M,K] lhs,\n//   s32[M,N,N] rhs, s32[K,M] filter)\n//   -> s32[K,M,K] output\n// Compiler tracks cumulative allocation:\n\nchoreo::runtime_check(\n  (size_t)0\n  + ((hp0.shape()[2]\n     * (hp0.shape()[1] * hp0.shape()[0])))\n     * 4\n  + (((hp0.shape()[1] * hp0.shape()[0])\n     * hp0.shape()[0])) * 4\n  + ((hp0.shape()[2]\n     * hp0.shape()[1])) * 4\n  + ((hp0.shape()[2]\n     * (hp0.shape()[2] * hp0.shape()[1])))\n     * 4\n  <= (size_t)MAX_BYTES,\n  \"total memory usage at global level\n   (compile time and runtime) should\n   not exceed MAX_BYTES bytes\");"},
+        {"file":"Tiling Validity","badge":"GENERATED","label":"within_runtime_check.co — division safety","lang":"cpp","code":"// Source: __co__ foo(f32[M, N] data)\n//   with idx in [M, N] / {6, 8192}\n// Compiler ensures non-zero tile counts:\n\nchoreo::runtime_check(\n  (hp0.shape()[0] / 6) != 0,\n  \"zero is detected for the 1st dim\n   of the mdspan inside the with-in\n   statement\");\n\nchoreo::runtime_check(\n  (hp0.shape()[1] / 8192) != 0,\n  \"zero is detected for the 2nd dim\n   of the mdspan inside the with-in\n   statement\");\n\n// Parallel-by bounds:\nchoreo::runtime_check(\n  num_blocks > 0,\n  \"The 1st bound item of parallelby\n   is invalid: should be greater\n   than 0\");"}
+      ]'></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 14b: Compile-Time Safety Stats                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="dense">
+  <div class="slide-header">
+    <img src="../../assets/images/logo-2.png" alt="">
+    <span class="header-title">CrokTile</span>
+    <span class="header-sep">|</span>
+    <span class="header-section">Chapter 2 — Compile-Time Safety</span>
+  </div>
+  <div class="slide-footer">
+    <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
+    <span class="footer-right">github.com/croktile</span>
+  </div>
+  <h2>353 Compile-Time Checks &middot; 1,319 Runtime Assertions</h2>
+  <div class="website-split" style="grid-template-columns:1fr 1fr;">
+    <div>
+      <div class="stats-grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+        <div class="stat" style="padding:12px;"><span class="stat-value" style="font-size:1.8em;">353</span><span class="stat-label" style="font-size:0.55em;">compile-time diagnostic checks</span></div>
+        <div class="stat" style="padding:12px;"><span class="stat-value" style="font-size:1.8em;">7</span><span class="stat-label" style="font-size:0.55em;">compiler modules</span></div>
+        <div class="stat" style="padding:12px;"><span class="stat-value" style="font-size:1.8em;">1,319</span><span class="stat-label" style="font-size:0.55em;">runtime assertions in production</span></div>
+        <div class="stat" style="padding:12px;"><span class="stat-value" style="font-size:1.8em;">0</span><span class="stat-label" style="font-size:0.55em;">silent bugs possible</span></div>
+      </div>
+      <table class="check-table" style="margin-top:12px;font-size:0.55em;">
+        <thead><tr><th>Compiler Module</th><th>Checks</th><th>Example Diagnostics</th></tr></thead>
+        <tbody>
+          <tr><td>Early Semantic Analysis</td><td><strong>189</strong></td><td>type mismatch, invalid parallel nesting</td></tr>
+          <tr><td>Semantic Validation</td><td><strong>65</strong></td><td>inconsistent shapes, invalid DMA target</td></tr>
+          <tr><td>Type Inference</td><td><strong>38</strong></td><td>conflicting types in reduction</td></tr>
+          <tr><td>Shape Inference</td><td><strong>33</strong></td><td>tiling factor exceeds data size</td></tr>
+          <tr><td>Loop Vectorization</td><td><strong>16</strong></td><td>vectorize factor not divisible</td></tr>
+          <tr><td>Static Assessment</td><td><strong>4</strong></td><td>shape incompatibility proven at compile time</td></tr>
+          <tr><td>Code Generation</td><td><strong>8</strong></td><td>architecture constraint violated, DMA &gt; 2&sup3;&sup2;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="editor-showcase editor-compact" data-tabs='[
+        {"file":"earlysema.cpp","badge":"189","label":"Early Semantic Analysis — 189 checks","lang":"text","code":"// type mismatch in SELECT\nerror: SELECT factor type must match\n  the operand type.\n\n// invalid parallel nesting\nerror: parallel-by nesting exceeds\n  maximum depth for target architecture.\n\n// undeclared variable in __co__ scope\nerror: undeclared identifier in\n  __co__ function scope.\n\n// invalid storage qualifier\nerror: shared memory cannot be\n  declared outside parallel block."},
+        {"file":"semacheck.cpp","badge":"65","label":"Semantic Validation — 65 checks","lang":"text","code":"// inconsistent shapes for spanned-op\nerror: DMA statement has a rank\n  mismatch between from and to: 3 != 4.\n\n// invalid DMA target memory space\nerror: DMA target must be shared or\n  local memory, got global.\n\n// MMA shape mismatch\nerror: MMA matrix shapes do not match\n  the accumulator dimensions.\n\n// DMA buffer too small\nerror: DMA to-buffer is too small\n  ((expr) > (expr))."},
+        {"file":"shapeinfer.cpp","badge":"33","label":"Shape Inference — 33 checks","lang":"text","code":"// tiling factor exceeds data size\nerror: tiling factor 128 exceeds\n  dimension size 64.\n\n// index out of bounds\nerror: index out of bounds for\n  dimension 1 (7 >= 2).\n\n// span size mismatch in chunkat\nerror: chunkat tile shape does not\n  divide evenly into source shape.\n\n// offset out of bounds\nerror: offset out of bounds for\n  dimension 0 (101 >= 14)."},
+        {"file":"codegen","badge":"8","label":"Code Generation — 8 checks","lang":"text","code":"// target architecture constraint\nerror: MMA [f16: m32n32k32] is not\n  supported by current architecture\n  (SM_86).\n\n// DMA size exceeds hardware limit\nerror: The size of data transferred\n  by DMA cannot exceed 2^32 bytes.\n\n// incompatible swizzle mode\nerror: swizzle mode 256 is not\n  supported for element type f8_e4m3."}
+      ]'></div>
     </div>
   </div>
 </section>
@@ -620,9 +708,9 @@ choreo::runtime_check(rhs.shape()[0] == output.shape()[1],
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- SLIDE 15: Dynamic vs Static                            -->
+<!-- SLIDE 15: Dynamic / Symbolic Shapes                    -->
 <!-- ═══════════════════════════════════════════════════════ -->
-<section>
+<section class="dense">
   <div class="slide-header">
     <img src="../../assets/images/logo-2.png" alt="">
     <span class="header-title">CrokTile</span>
@@ -633,42 +721,50 @@ choreo::runtime_check(rhs.shape()[0] == output.shape()[1],
     <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
     <span class="footer-right">github.com/croktile</span>
   </div>
-  <h2>Dynamic vs Static Shapes</h2>
-  <div class="split">
-    <div>
-      <h4>Static shapes — fixed at compile time</h4>
-      <p>Dimensions are <code>#define</code> constants. Every new size requires recompilation.</p>
-      <div class="editor-block" data-lang="choreo" data-file="static.co">#define M 4096
-#define N 2048
-#define K 2048
-
-__co__ auto matmul(
-    f16 [M, K] lhs,
-    f16 [N, K] rhs) {
-  f16 [M, N] output{0.0f};
-  int TILE_M = 32, TILE_N = 32;
-  // ...
-}</div>
+  <h2>Symbolic Dimensions &amp; Compile-Time Reasoning</h2>
+  <div class="website-split" style="grid-template-columns:0.82fr 1.18fr;">
+    <div class="claims">
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#dbeafe;">&#x1F524;</span>
+        <span><strong>Named symbolic dims</strong> &mdash; <code>M</code>, <code>K</code>, <code>N</code> are first-class symbols; same symbol across params encodes a shared relationship</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#fef3c7;">&#x2699;</span>
+        <span><strong>Affine expressions</strong> &mdash; <code>cdiv(M,64)</code>, <code>K/2</code>, <code>M/up</code>, <code>seg_end - seg_start</code> all work as symbolic values</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#dcfce9;">&#x1F9E0;</span>
+        <span><strong>Shape inference</strong> &mdash; compiler propagates symbols, infers <code>output[M,N]</code> from <code>lhs[M,K]</code> &times; <code>rhs[K,N]</code></span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#ede9fe;">&#x1F517;</span>
+        <span><strong>Cross-param relationships</strong> &mdash; <code>where k &lt;-&gt; k1</code> declares constraints; compiler uses them to optimize</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#fee2e2;">&#x1F3AF;</span>
+        <span><strong>Auto tail handling</strong> &mdash; dynamic remainder auto-generates predicated copies with zero-fill</span>
+      </div>
     </div>
     <div>
-      <h4>Dynamic shapes — resolved at runtime</h4>
-      <p>Dimensions are <strong>symbolic parameters</strong>. One compilation serves all sizes.</p>
-      <div class="editor-block" data-lang="choreo" data-file="dynamic.co" data-badge="CROKTILE">__co__ void matmul(
-    global f16 [M, K] lhs,
-    global f16 [N, K] rhs,
-    global f16 [M, N] output) {
-  // M, N, K are runtime values
-  parallel {block_m, block_n}
-    by [cdiv(M, WARP_M), cdiv(N, WARP_N)]
-    : block {
-    shared f16 [WARP_M, TILE_K] lhs_s;
-    // shared memory size adapts to tiles
-    // ...
-  }
-}
-// Called with any M, N, K at runtime:
-// matmul(lhs_2048, rhs_2048, res_2048);
-// matmul(lhs_4096, rhs_8192, res_4096);</div>
+      <div class="editor-showcase editor-compact" data-tabs='[
+        {"file":"Named Dims","badge":"CROKTILE","label":"matmul — shared K across params","lang":"choreo","code":"@@__co__ void matmul(@@\n@@    global f16 [M, K] lhs,@@\n@@    global f16 [N, K] rhs,@@\n@@    global f16 [M, N] output) {@@\n  // M, N, K are symbolic — resolved at runtime\n  // K appears in both lhs and rhs: shared dim\n  // output shape [M, N] inferred automatically\n\n@@  parallel {block_m, block_n}@@\n@@    by [cdiv(M, WARP_M), cdiv(N, WARP_N)]@@\n    : block {\n    shared f16 [WARP_M, TILE_K] lhs_s;\n    shared f16 [WARP_N, TILE_K] rhs_s;\n    mc = mma.fill.f32 0.0f;\n@@    foreach {iv_k} in [cdiv(K, TILE_K)] {@@\n      tma.copy.swiz<128>\n        lhs.subspan(WARP_M, TILE_K)\n          .at(block_m, iv_k) => lhs_s;\n      // ...\n    }\n  }\n}\n// Compiler infers:\n//   block_m bounded by [cdiv(M, 64)]\n//   iv_k bounded by [cdiv(K, 64)]"},
+        {"file":"Affine Derived","badge":"CROKTILE","label":"spmm — derived dims PACKED_K, META_COLS","lang":"choreo","code":"@@__co__ void spmm(@@\n@@    global f8 [M, PACKED_K] lhs_packed,@@\n@@    global u8 [M, META_COLS] lhs_meta,@@\n@@    global f8 [N, K] rhs,@@\n@@    global f16 [M, N] output) {@@\n  // PACKED_K = K/2 (2:4 sparsity)\n  // META_COLS = K/8 (metadata)\n  // Compiler tracks all relationships\n\n  parallel {block_m, block_n}\n    by [cdiv(M, TILE_M), cdiv(N, WARP_N)]\n    : block {\n@@    foreach {iv_k} in [cdiv(K, TILE_K)] {@@\n      tma.copy.swiz<32>\n        lhs_packed.subspan(TILE_M, PACKED_TILE_K)\n          .at(block_m, iv_k) => sA;\n      tma.copy.swiz<128>\n        rhs.subspan(WARP_N, TILE_K)\n          .at(block_n, iv_k) => sB;\n      // K indexes both packed and dense\n    }\n  }\n}"},
+        {"file":"Relationships","badge":"CROKTILE","label":"dyn_matmul — where k <-> k1","lang":"choreo","code":"@@__co__ auto matmul(@@\n@@    s32 [512, ?] lhs, s32 [?, ?] rhs) {@@\n  // ? = unbounded (runtime-only) dim\n@@  s32[lhs.span(0), rhs.span(1)] output;@@\n  // output shape derived from input spans\n\n  parallel p by 1 {\n@@    with index = {m, k} in lhs.span / {8, 1024},@@\n@@         {k1, n} in rhs.span / {1024, 128}@@\n@@    where k <-> k1 {@@\n      // k and k1 iterate in lockstep\n      // Compiler verifies lhs dim1 == rhs dim0\n      foreach m {\n        foreach n {\n          foreach k {\n            lhs_t = dma.copy\n              lhs.chunkat(m, k) => local;\n            rhs_t = dma.copy\n              rhs.chunkat(k, n) => local;\n            // ...\n          }\n        }\n      }\n    }\n  }\n  return output;\n}"},
+        {"file":"Batched","badge":"CROKTILE","label":"bmm — batch dim B shared across all","lang":"choreo","code":"@@__co__ void bmm(@@\n@@    global bf16 [B, M, K] lhs,@@\n@@    global bf16 [B, N, K] rhs,@@\n@@    global f32  [B, M, N] output) {@@\n  // B is batch dim, shared across all 3 params\n  // M, N, K are contraction dims\n\n@@  parallel {block_b, block_m, block_n}@@\n@@    by [B, cdiv(M, WARP_M), cdiv(N, WARP_N)]@@\n    : block {\n    shared bf16 [1, WARP_M, TILE_K] lhs_s;\n    shared bf16 [1, WARP_N, TILE_K] rhs_s;\n\n    foreach {iv_k} in [cdiv(K, TILE_K)] {\n      tma.copy.swiz<128>\n        lhs.subspan(1, WARP_M, TILE_K)\n@@          .at(block_b, block_m, iv_k)@@\n            => lhs_s;\n      // block_b selects batch slice\n      // same symbol B in all params\n    }\n  }\n}"},
+        {"file":"Tail Handling","badge":"CROKTILE","label":"copy_if — auto predicated copies","lang":"choreo","code":"@@__co__ void test(f16 [M, K] input) {@@\n  parallel {bm, bk}\n    by [cdiv(M, 64), cdiv(K, 64)] : block {\n    shared f16 [64, 64] s_tail;\n\n@@    base_m = bm * 64;@@\n@@    remain_m = M - base_m;@@\n@@    TM = (64 < remain_m) ? 64 : remain_m;@@\n\n@@    dma.copy.swiz<128>.zfill@@\n@@      input.view(64, 64).from(base_m, 0)@@\n@@        => s_tail.subspan(TM, 64);@@\n    // Compiler generates:\n    //   copy_if(coord, make_shape(\n    //     64 < M - blockIdx.x*64\n    //       ? Int<64>{}\n    //       : M - blockIdx.x*Int<64>{},\n    //     Int<64>{}));\n    // Zero-fill for out-of-bounds elements\n    // No manual masking needed!\n  }\n}"},
+        {"file":"Shape Inference","badge":"INFERRED","label":"named_dims.co — compiler output","lang":"text","code":"// Source:\n//   __co__ auto matmul(\n//     s32 [M, K] lhs, s32 [K, N] rhs)\n//   s32[lhs.span(0), rhs.span(1)] output;\n\n// Compiler infers types:\n@@Parameter: lhs@@\n@@  Type: s32 mdspan<2> [M, K]@@\n@@Parameter: rhs@@\n@@  Type: s32 mdspan<2> [K, N]@@\n@@Symbol: output@@\n@@  Type: global s32 mdspan<2> [M, N]@@\n\n// Tiling inference:\n@@Bounded: index@@\n@@  Type: {int,int,int}@@\n@@  -> [(M/8), (K/1024), (N/128)]@@\n\n// Chunk shape inference:\n@@Future: lhs_load@@\n@@  Type: sync => local s32 mdspan<2> [8, 1024]@@\n@@Future: rhs_load@@\n@@  Type: sync => local s32 mdspan<2> [1024, 128]@@\n\n// Function signature:\n@@Function: matmul@@\n@@  Type: s32 mdspan<2> [M, N]@@\n@@    (*)(s32 [M, K], s32 [K, N])@@"}
+      ]'></div>
+      <table class="check-table" style="margin-top:6px;font-size:0.55em;">
+        <thead><tr><th>Capability</th><th>CrokTile</th><th>Triton</th><th>TileLang</th><th>CuTe</th><th>CUDA</th></tr></thead>
+        <tbody>
+          <tr><td>Dynamic shapes</td><td class="check-yes">&#x2713;</td><td class="check-yes">&#x2713;</td><td class="check-no">&mdash;</td><td class="check-yes">&#x2713;</td><td class="check-yes">&#x2713;</td></tr>
+          <tr><td>Named symbols</td><td class="check-yes">&#x2713;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td></tr>
+          <tr><td>Affine expressions</td><td class="check-yes">&#x2713;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td></tr>
+          <tr><td>Cross-param constraints</td><td class="check-yes">&#x2713;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td></tr>
+          <tr><td>Compile-time inference</td><td class="check-yes">&#x2713;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td></tr>
+          <tr><td>Auto runtime checks</td><td class="check-yes">&#x2713;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td><td class="check-no">&mdash;</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
@@ -676,7 +772,7 @@ __co__ auto matmul(
 <!-- ═══════════════════════════════════════════════════════ -->
 <!-- SLIDE 16: Memory Access Primitives                     -->
 <!-- ═══════════════════════════════════════════════════════ -->
-<section>
+<section class="dense">
   <div class="slide-header">
     <img src="../../assets/images/logo-2.png" alt="">
     <span class="header-title">CrokTile</span>
@@ -688,28 +784,45 @@ __co__ auto matmul(
     <span class="footer-right">github.com/croktile</span>
   </div>
   <h2>Flexible Memory Access Primitives</h2>
-  <p>CrokTile provides a rich set of <strong>view and slicing operators</strong> that work on both static and dynamic tensors — all bounds-checked and type-safe.</p>
-  <div class="editor-block" data-lang="choreo" data-file="primitives.co" data-badge="CROKTILE">// chunkat — tile a tensor into fixed-size chunks, index by tile coordinate
-lhs_load_s = tma.copy.swiz&lt;128&gt; lhs.chunkat(block_m, iv_k) =&gt; shared;
-
-// subspan — create a sub-view with explicit tile shape
-tma.copy output_s =&gt; output.subspan(WARP_M, WARP_N).at(block_m, block_n);
-
-// view + from — dynamic window into a tensor (MoE expert segments)
-dma.copy.swiz&lt;128&gt;.zfill
-  lhs.view(WARP_M, TILE_K).from(seg_start + iv_m * WARP_M, iv_k * TILE_K)
-    =&gt; sA.subspan(TILE_M, TILE_K);
-
-// span_as — reshape without copy (BMM: collapse batch dim)
-ma = mma.load.swizzle&lt;128&gt;
-  lhs_load_s.span_as([WARP_M, TILE_SIZE_K]).chunkat(_, iv_warp);
-
-// at — scalar element access
-output.at(block_b, block_m # m, block_n # (n # ni)) += result;
-
-// # operator — hierarchical index composition (block + warp + thread)
-block_m # iv_warp_m # iv_thr_m # thr_m   // composes to a global index</div>
-  <blockquote>In CUDA, each of these requires manual pointer arithmetic with error-prone offset calculations.</blockquote>
+  <div class="website-split" style="grid-template-columns:0.82fr 1.18fr;">
+    <div class="claims">
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#dcfce9;">&#x1F4E6;</span>
+        <span><strong><code>chunkat</code></strong> &mdash; tile into fixed-size chunks by index. Best for <strong>regular grids</strong>: each block processes one tile</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#dbeafe;">&#x1F4CF;</span>
+        <span><strong><code>subspan/at</code></strong> &mdash; sub-view with explicit tile shape + tile index. Best for <strong>TMA copies</strong> where shape must be declared upfront</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#fef3c7;">&#x1F50D;</span>
+        <span><strong><code>view/from</code></strong> &mdash; dynamic window with arbitrary offset. Best for <strong>irregular access</strong>: MoE segments, variable-length seqs</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#ede9fe;">&#x1F504;</span>
+        <span><strong><code>span_as</code></strong> &mdash; reshape without copy. Best for <strong>reinterpreting layouts</strong>: collapse batch dim, reshape for MMA</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#fee2e2;">&#x1F517;</span>
+        <span><strong><code>#</code> operator</strong> &mdash; hierarchical index composition. Combines block + warp + thread indices into a single global index</span>
+      </div>
+      <div class="cuda-compare">
+        <h4 style="margin-top:4px;">In CUDA</h4>
+        <ul style="font-size:0.65em;margin-top:0;">
+          <li>Manual pointer arithmetic for every access pattern</li>
+          <li>No bounds checking &mdash; off-by-one = silent corruption</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="editor-showcase" data-tabs='[
+        {"file":"chunkat","badge":"CROKTILE","label":"regular tiling — fixed-size chunks","lang":"choreo","code":"// chunkat: tile by coordinate index\n// Each block processes one [WARP_M, TILE_K] chunk\n\n@@tma.copy.swiz<128>@@\n@@  lhs.chunkat(block_m, iv_k)@@\n@@    => lhs_load_s;@@\n\n@@tma.copy.swiz<128>@@\n@@  rhs.chunkat(block_n, iv_k)@@\n@@    => rhs_load_s;@@\n\n// Tile shape inferred from destination\n// block_m, iv_k are bounded tile indices\n// No manual offset computation needed"},
+        {"file":"subspan/at","badge":"CROKTILE","label":"explicit sub-view — TMA-friendly","lang":"choreo","code":"// subspan: declare tile shape explicitly\n// at: index into tile grid\n\n@@tma.copy.swiz<128>@@\n@@  lhs.subspan(WARP_M, TILE_K)@@\n@@    .at(block_m, iv_k) => lhs_s;@@\n\n// Store result back via subspan\n@@tma.copy output_s@@\n@@  => output.subspan(WARP_M, WARP_N)@@\n@@       .at(block_m, block_n);@@\n\n// step variant: strided access\ntma.copy lhs.subspan(TILE_M, TILE_K)\n  .step(STRIDE_M, 1).at(block_m, iv_k)\n    => lhs_s;"},
+        {"file":"view/from","badge":"CROKTILE","label":"dynamic window — MoE, irregular access","lang":"choreo","code":"// view/from: arbitrary dynamic offset\n// MoE: each expert has variable segment\n\ns32 seg_start = expert_offsets.at(eid);\ns32 seg_end = expert_offsets.at(eid + 1);\ns32 seg_length = seg_end - seg_start;\n\n@@dma.copy.swiz<128>.zfill@@\n@@  lhs.view(WARP_M, TILE_K)@@\n@@    .from(seg_start + iv_m * WARP_M,@@\n@@          iv_k * TILE_K)@@\n@@    => sA.subspan(TILE_M, TILE_K);@@\n\n// .zfill: zero-fill out-of-bounds\n// Dynamic offsets from runtime values\n// No manual boundary clamp needed"},
+        {"file":"span_as / #","badge":"CROKTILE","label":"reshape + hierarchical index","lang":"choreo","code":"// span_as: reshape without copy\n// Collapse batch dim for MMA load\n@@ma = mma.load.swiz<128>@@\n@@  lhs_s.span_as([WARP_M, TILE_K])@@\n@@    .chunkat(_, iv_warp);@@\n\n// # operator: hierarchical index\n// Composes block + warp + thread\n@@output.at(@@\n@@  block_b,@@\n@@  block_m # m,@@\n@@  block_n # (n # ni)@@\n@@) += result;@@\n\n// Equivalent CUDA:\n// output[block_b]\n//   [block_m*WM + m]\n//   [block_n*WN + n*NI + ni]"}
+      ]'></div>
+    </div>
+  </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
@@ -719,6 +832,89 @@ block_m # iv_warp_m # iv_thr_m # thr_m   // composes to a global index</div>
   <h4>Chapter 4</h4>
   <h2>Highlight 4: Born for Agentic AI Programming</h2>
   <p>Superior context engineering + superior harness engineering</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 18a: AI Tuning Results                           -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="dense">
+  <div class="slide-header">
+    <img src="../../assets/images/logo-2.png" alt="">
+    <span class="header-title">CrokTile</span>
+    <span class="header-sep">|</span>
+    <span class="header-section">Chapter 4 — AI Programming</span>
+  </div>
+  <div class="slide-footer">
+    <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
+    <span class="footer-right">github.com/croktile</span>
+  </div>
+  <h2>Born for AI Tuning</h2>
+  <div class="feature-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin:8px 0 14px;">
+    <div class="feature-card" style="padding:10px 12px;">
+      <h3 style="font-size:0.6em;gap:6px;"><span class="feature-icon" style="background:#dcfce9;width:22px;height:22px;font-size:11px;">&#x2713;</span> Compact syntax for AI context</h3>
+    </div>
+    <div class="feature-card" style="padding:10px 12px;">
+      <h3 style="font-size:0.6em;gap:6px;"><span class="feature-icon" style="background:#dcfce9;width:22px;height:22px;font-size:11px;">&#x2713;</span> Error-prone configs hidden</h3>
+    </div>
+    <div class="feature-card" style="padding:10px 12px;">
+      <h3 style="font-size:0.6em;gap:6px;"><span class="feature-icon" style="background:#dcfce9;width:22px;height:22px;font-size:11px;">&#x2713;</span> CLI well-documented for agents</h3>
+    </div>
+    <div class="feature-card" style="padding:10px 12px;">
+      <h3 style="font-size:0.6em;gap:6px;"><span class="feature-icon" style="background:#dcfce9;width:22px;height:22px;font-size:11px;">&#x2713;</span> Compile-time guardrails</h3>
+    </div>
+  </div>
+  <div class="website-split" style="grid-template-columns:1fr 1fr;">
+    <div>
+      <div class="editor-block" data-lang="text" data-file="ai-prompt.txt" data-badge="PROMPT" style="font-size:0.6em;">User:
+continue experiment on branch
+ai-tune/2026-03-24/gemm_sp_f16.
+Read two reference experiment branches:
+  branch 1: ai-tune/2026-03-21/gemm_sp_f16
+  branch 2: ai-tune/2026-03-21/gemm_sp_e4m3
+Branch 2 best can achieve over 1100 TFLOPS,
+branch 1 best 600+ TFLOPS. Do not directly
+copy — optimize stage over stage.
+KICK OFF EXPERIMENTS NOW.</div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:8px;">
+        <p style="font-size:0.55em;font-weight:600;color:var(--fg-secondary);margin:0 0 6px;">results.tsv &mdash; e4m3 sparse GEMM, 68 iterations</p>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:0.5em;"><span style="width:42px;text-align:right;color:var(--fg-secondary);">baseline</span><div style="height:16px;border-radius:3px;background:var(--mint-400);width:59%;display:flex;align-items:center;padding-left:6px;color:#fff;font-weight:700;font-size:0.9em;">671</div></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:0.5em;"><span style="width:42px;text-align:right;color:var(--fg-secondary);">iter001</span><div style="height:16px;border-radius:3px;background:var(--mint-500);width:67%;display:flex;align-items:center;padding-left:6px;color:#fff;font-weight:700;font-size:0.9em;">759</div></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:0.5em;"><span style="width:42px;text-align:right;color:var(--fg-secondary);">iter016</span><div style="height:16px;border-radius:3px;background:var(--mint-500);width:68%;display:flex;align-items:center;padding-left:6px;color:#fff;font-weight:700;font-size:0.9em;">772</div></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:0.5em;"><span style="width:42px;text-align:right;color:var(--fg-secondary);">iter023</span><div style="height:16px;border-radius:3px;background:var(--mint-600);width:72%;display:flex;align-items:center;padding-left:6px;color:#fff;font-weight:700;font-size:0.9em;">811</div></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:0.5em;"><span style="width:42px;text-align:right;color:var(--fg-secondary);">iter068</span><div style="height:16px;border-radius:3px;background:var(--mint-700);width:100%;display:flex;align-items:center;padding-left:6px;color:#fff;font-weight:700;font-size:0.9em;">1127</div></div>
+        </div>
+        <p style="font-size:0.6em;font-weight:700;color:var(--mint-700);margin:6px 0 0;text-align:center;">671 &rarr; 1127 TFLOPS (+67.9%) in 68 AI-driven iterations</p>
+      </div>
+    </div>
+    <div class="claims">
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#dcfce9;">&#x1F916;</span>
+        <span>Language <strong>designed from scratch</strong> for AI-assisted optimization</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#dbeafe;">&#x1F4DD;</span>
+        <span>Compact syntax keeps entire kernels inside <strong>AI context windows</strong></span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#fef3c7;">&#x1F3AF;</span>
+        <span>AI achieved <strong>1127 TFLOPS</strong> from 671 baseline in a single session</span>
+      </div>
+      <div class="claim-item">
+        <span class="claim-icon" style="background:#ede9fe;">&#x1F527;</span>
+        <span>Well-documented CLI and <strong>structured errors</strong> for autonomous agents</span>
+      </div>
+      <table class="check-table" style="margin-top:8px;font-size:0.5em;">
+        <thead><tr><th>Kernel</th><th>Iters</th><th>Baseline</th><th>Best</th><th>vs Base</th><th>vs cuBLAS</th></tr></thead>
+        <tbody>
+          <tr><td>Dense GEMM FP16</td><td>65</td><td>208.7</td><td><strong>382.5</strong></td><td><strong>+83%</strong></td><td><strong>100.5%</strong></td></tr>
+          <tr><td>Sparse GEMM FP16</td><td>153</td><td>368</td><td><strong>655</strong></td><td><strong>+78%</strong></td><td>&mdash;</td></tr>
+          <tr><td>Sparse GEMM E4M3</td><td>68</td><td>671</td><td><strong>1127</strong></td><td><strong>+67.9%</strong></td><td>&mdash;</td></tr>
+          <tr><td>Blockscale GEMM FP8</td><td>71</td><td>397.9</td><td><strong>621</strong></td><td><strong>+56%</strong></td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
@@ -735,28 +931,27 @@ block_m # iv_warp_m # iv_thr_m # thr_m   // composes to a global index</div>
     <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
     <span class="footer-right">github.com/croktile</span>
   </div>
-  <h2>Superior Context Engineering — Real Results</h2>
-  <p><strong>1 AI agent + 1 CrokTile request = autonomous performance tuning</strong></p>
-  <table>
-    <thead>
-      <tr><th>Kernel</th><th>Iterations</th><th>Baseline</th><th>Best</th><th>vs Baseline</th><th>vs cuBLAS</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Dense GEMM FP16</td><td>65</td><td>208.7 TFLOPS</td><td>382.5 TFLOPS</td><td><strong>+83%</strong></td><td><strong>100.5%</strong></td></tr>
-      <tr><td>Sparse GEMM FP16</td><td>153</td><td>368 TFLOPS</td><td>655 TFLOPS</td><td><strong>+78%</strong></td><td>—</td></tr>
-      <tr><td>Blockscale GEMM FP8</td><td>71</td><td>397.9 TFLOPS</td><td>621 TFLOPS</td><td><strong>+56%</strong></td><td>—</td></tr>
-    </tbody>
-  </table>
-  <div style="margin-top:16px;">
-    <h4>Why CrokTile enables this:</h4>
-    <ul>
-      <li><strong>25-line kernels</strong> fit entirely in an AI agent's context window (~500 tokens)</li>
-      <li>Clean syntax is parsable — AI agents <strong>understand</strong> the code, not just copy it</li>
-      <li>Tileflow structure guides the agent to make <strong>valid</strong> optimizations</li>
-      <li>Each iteration is a small, safe change within the compile-time safety net</li>
-    </ul>
+  <h2>Superior Context Engineering</h2>
+  <p style="margin-top:-4px;font-size:0.7em;opacity:0.8;">Why CrokTile is the optimal language substrate for AI-driven kernel optimization</p>
+  <div class="feature-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-top:16px;">
+    <div class="feature-card" style="padding:16px 14px;">
+      <h3 style="font-size:0.75em;"><span class="feature-icon" style="background:#dcfce9;">&#x1F4CA;</span> Highest Source Density</h3>
+      <p style="font-size:0.55em;margin:8px 0 0;line-height:1.5;color:var(--fg-secondary);">25-line kernels fit entirely in ~500 tokens. <strong>Lowest information entropy</strong> per context token &mdash; every token carries optimization-relevant semantics, not boilerplate.</p>
+    </div>
+    <div class="feature-card" style="padding:16px 14px;">
+      <h3 style="font-size:0.75em;"><span class="feature-icon" style="background:#dbeafe;">&#x2699;</span> Unified Primitives</h3>
+      <p style="font-size:0.55em;margin:8px 0 0;line-height:1.5;color:var(--fg-secondary);">One <code>dma.copy</code> / <code>mma.row</code> dispatches to the optimal HW implementation at compile time. AI only reasons about <strong>intent</strong>, not instruction selection &mdash; faster convergence.</p>
+    </div>
+    <div class="feature-card" style="padding:16px 14px;">
+      <h3 style="font-size:0.75em;"><span class="feature-icon" style="background:#fef3c7;">&#x1F9E0;</span> AI-Parsable Syntax</h3>
+      <p style="font-size:0.55em;margin:8px 0 0;line-height:1.5;color:var(--fg-secondary);">Clean, regular syntax with explicit semantics. AI agents <strong>understand and reason</strong> about the code structure, not just pattern-match and copy &mdash; enabling principled optimizations.</p>
+    </div>
+    <div class="feature-card" style="padding:16px 14px;">
+      <h3 style="font-size:0.75em;"><span class="feature-icon" style="background:#fee2e2;">&#x1F6E1;</span> Safety-Accelerated Loop</h3>
+      <p style="font-size:0.55em;margin:8px 0 0;line-height:1.5;color:var(--fg-secondary);">Compile-time safety checks accelerate the tuning feedback loop. Invalid changes are <strong>rejected immediately</strong>, eliminating divergent thinking and random guessing in the AI&rsquo;s context.</p>
+    </div>
   </div>
-  <blockquote>The same optimization task in CUDA would require 180+ lines per kernel, 3000+ tokens of context, and manual debugging of silent bugs.</blockquote>
+  <blockquote style="margin-top:14px;font-size:0.6em;">CUDA: 180+ lines/kernel, 3000+ tokens, manual debug. CrokTile: 25 lines, ~500 tokens, zero silent bugs.</blockquote>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
@@ -773,31 +968,36 @@ block_m # iv_warp_m # iv_thr_m # thr_m   // composes to a global index</div>
     <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
     <span class="footer-right">github.com/croktile</span>
   </div>
-  <h2>Superior Harness Engineering — Compiler as AI Guardrail</h2>
-  <p>CrokTile's compiler messages are <strong>tailored for AI understanding</strong> — guiding program repair and performance tuning.</p>
-  <div class="split">
-    <div>
-      <h4>Compile-time messages tell the AI exactly what to fix:</h4>
-      <div class="editor-block" data-lang="choreo" data-file="errors.co">error: "MATMUL_WARP_M must be 64 for f16 WGMMA constraints"
-error: "MATMUL_SWIZ must equal 2 * MATMUL_TILE_K for f16 kernel"
-error: "MATMUL_WARP_K must be 32 for f8 WGMMA constraints"</div>
-      <h4 style="margin-top:12px;">Runtime checks with actionable diagnostics:</h4>
-      <div class="editor-block" data-lang="cpp" data-file="runtime.cu">runtime_check failed: "The shapes of the 1st parameter (dim: 1)
-  and the 2nd parameter (dim: 1) are inconsistent."</div>
+  <h2>Superior Harness Engineering</h2>
+  <p style="margin-top:-4px;font-size:0.7em;opacity:0.8;">Compiler as AI guardrail &mdash; controlling randomness, accelerating convergence</p>
+  <div class="website-split" style="grid-template-columns:1.1fr 0.9fr;gap:16px;">
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="feature-card" style="padding:14px 16px;">
+        <h3 style="font-size:0.75em;"><span class="feature-icon" style="background:#dcfce9;">&#x1F6E1;</span> Exhaustive Safety Coverage</h3>
+        <p style="font-size:0.55em;margin:6px 0 0;line-height:1.5;color:var(--fg-secondary);">No error falls back to an opaque runtime bug. 353 compile-time + 1,319 runtime checks eliminate <strong>random guessing</strong> &mdash; every invalid state is caught with a clear diagnostic, accelerating convergence and strengthening harness stability.</p>
+      </div>
+      <div class="feature-card" style="padding:14px 16px;">
+        <h3 style="font-size:0.75em;"><span class="feature-icon" style="background:#dbeafe;">&#x1F4AC;</span> AI-Readable Diagnostics</h3>
+        <p style="font-size:0.55em;margin:6px 0 0;line-height:1.5;color:var(--fg-secondary);">Compiler and profiler messages are designed for AI reading. Each error message acts as a <strong>guardrail</strong> that directly informs the next optimization step &mdash; no manual interpretation needed, faster tuning convergence.</p>
+      </div>
+      <div class="feature-card" style="padding:14px 16px;">
+        <h3 style="font-size:0.75em;"><span class="feature-icon" style="background:#fef3c7;">&#x1F527;</span> Unified Declaration &amp; Use</h3>
+        <p style="font-size:0.55em;margin:6px 0 0;line-height:1.5;color:var(--fg-secondary);">Higher-level integrated abstractions merge declaration and usage. Raw CUDA TMA requires configuring descriptor, CUtensorMap, moving them to device, and picking the trigger thread separately &mdash; CrokTile: <strong>one <code>tma.copy</code> primitive</strong>. Eliminates config/use mismatch bugs that waste AI tuning cycles.</p>
+      </div>
     </div>
     <div>
-      <h4>Result: 200+ iterations without a single silent failure</h4>
-      <table class="compact">
+      <table class="check-table" style="font-size:0.55em;">
         <thead><tr><th>Metric</th><th>CrokTile</th><th>CUDA</th></tr></thead>
         <tbody>
-          <tr><td>Invalid kernel → compile error</td><td><strong>Yes</strong></td><td>No (silent bug)</td></tr>
-          <tr><td>Shape mismatch → runtime error</td><td><strong>Auto-generated</strong></td><td>Manual or absent</td></tr>
-          <tr><td>AI iterations without crash</td><td><strong>200+</strong></td><td>Frequent hangs</td></tr>
-          <tr><td>Context cost per debug cycle</td><td><strong>~0 tokens</strong></td><td>~3000+ tokens</td></tr>
-          <tr><td>AI learning curve</td><td><strong>Hours</strong></td><td>Days</td></tr>
+          <tr><td>Invalid kernel &rarr; error</td><td class="check-yes"><strong>Compile-time</strong></td><td class="check-no">Silent bug</td></tr>
+          <tr><td>Shape mismatch</td><td class="check-yes"><strong>Auto-generated</strong></td><td class="check-no">Manual / absent</td></tr>
+          <tr><td>TMA config</td><td class="check-yes"><strong>1 primitive</strong></td><td class="check-no">5+ setup steps</td></tr>
+          <tr><td>AI iterations w/o crash</td><td class="check-yes"><strong>200+</strong></td><td class="check-no">Frequent hangs</td></tr>
+          <tr><td>Debug context cost</td><td class="check-yes"><strong>~0 tokens</strong></td><td class="check-no">~3000+ tokens</td></tr>
+          <tr><td>AI learning curve</td><td class="check-yes"><strong>Hours</strong></td><td class="check-no">Days</td></tr>
         </tbody>
       </table>
-      <blockquote>The compiler is the harness — it reduces AI randomness by making invalid programs <strong>impossible to compile</strong>.</blockquote>
+      <blockquote style="margin-top:10px;font-size:0.6em;">The compiler is the harness &mdash; it reduces AI randomness by making invalid programs <strong>impossible to compile</strong>.</blockquote>
     </div>
   </div>
 </section>
@@ -986,8 +1186,29 @@ error: "MATMUL_WARP_K must be 32 for f8 WGMMA constraints"</div>
     el.parentNode.replaceChild(container.firstChild, el);
   });
 
+  function highlightWithPatterns(code, lang) {
+    var hasMarkers = code.indexOf("@@") !== -1;
+    if (!hasMarkers) return highlightCode(code, lang);
+
+    var lines = code.split("\n");
+    return lines.map(function(line) {
+      var hasHL = line.indexOf("@@") !== -1;
+      var clean = line.replace(/@@/g, "");
+      var highlighted = tokenizeLine(clean, lang).map(function(tok) {
+        var c = PALETTE[tok.type] || PALETTE.default;
+        return '<span style="color:'+c+'">'+escapeHtml(tok.text)+'</span>';
+      }).join("");
+      if (hasHL) {
+        return '<span class="hl-line">' + highlighted + '</span>';
+      } else {
+        return '<span class="fade-line">' + highlighted + '</span>';
+      }
+    }).join("\n");
+  }
+
   document.querySelectorAll(".editor-showcase").forEach(function(el) {
     var tabs = JSON.parse(el.getAttribute("data-tabs"));
+    var isPattern = el.classList.contains("pattern-showcase");
     var activeTab = 0;
     function render() {
       var dots = '<div class="editor-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>';
@@ -996,8 +1217,10 @@ error: "MATMUL_WARP_K must be 32 for f8 WGMMA constraints"</div>
         return '<button class="'+cls+'" data-idx="'+i+'">'+escapeHtml(tab.file)+'</button>';
       }).join("");
       var badge = tabs[activeTab].badge;
-      var badgeHtml = badge ? '<span class="editor-badge">'+escapeHtml(badge)+'</span>' : '';
-      var highlighted = highlightCode(tabs[activeTab].code, tabs[activeTab].lang);
+      var badgeCls = (badge === "ERROR") ? "editor-badge editor-badge-error" : "editor-badge";
+      var badgeHtml = badge ? '<span class="'+badgeCls+'">'+escapeHtml(badge)+'</span>' : '';
+      var code = tabs[activeTab].code;
+      var highlighted = isPattern ? highlightWithPatterns(code, tabs[activeTab].lang) : highlightCode(code, tabs[activeTab].lang);
       var label = tabs[activeTab].label || "";
       el.innerHTML =
         '<div class="editor editor-tabbed">' +
