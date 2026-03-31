@@ -3,10 +3,12 @@
   "version": "2.0.0",
   "description": "CrokTile presentation slides powered by reveal.js",
   "scripts": {
-    "dev": "python3 -m http.server 8000",
-    "build": "python3 scripts/build.py",
-    "build:html": "python3 scripts/build.py --format html",
-    "build:pdf": "python3 scripts/build.py --format pdf"
+    "dev": "node scripts/serve.js 8000",
+    "build": "node scripts/build.js",
+    "build:html": "node scripts/build.js --format html",
+    "build:pdf": "node scripts/build.js --format pdf",
+    "dev:py": "python3 -m http.server 8000",
+    "build:py": "python3 scripts/build.py"
   },
   "repository": {
     "type": "git",

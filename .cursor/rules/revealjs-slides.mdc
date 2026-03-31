@@ -25,10 +25,11 @@ alwaysApply: false
 - The custom syntax highlighter runs client-side in vanilla JS
 
 ## Build
-- `python3 scripts/build.py` — builds all decks (HTML + PDF)
+- `npm run build` — builds all decks (Node.js, cross-platform)
+- `npm run build:html` — HTML only
+- `npm run dev` — local preview server (Node.js)
+- `python3 scripts/build.py` — builds all decks (Python, Linux/macOS)
 - `python3 scripts/build.py <deck-name>` — build specific deck
-- `python3 scripts/build.py --format html` — HTML only
-- `npm run dev` — local preview server
 
 ## Style
 - Font: Inter + JetBrains Mono

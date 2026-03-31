@@ -2,7 +2,7 @@
 
 Presentation slides for **CrokTile** — a GPU programming framework. Built with **reveal.js**.
 
-## Quick Start
+## Quick Start (Linux / macOS)
 
 ```bash
 # Ensure Node.js 20+ is on PATH
@@ -12,7 +12,7 @@ export PATH="$HOME/.local/bin:$PATH"
 npm install
 
 # Preview locally (open http://localhost:8000/decks/croktile-intro/)
-npm run dev
+npm run dev          # or: python3 -m http.server 8000
 
 # Build self-contained HTML
 python3 scripts/build.py --format html
@@ -24,12 +24,35 @@ python3 scripts/build.py --format pdf
 python3 scripts/build.py
 ```
 
+## Quick Start (Windows)
+
+```powershell
+# Ensure Node.js 20+ is installed (node -v to verify)
+
+# Install dependencies
+npm install
+
+# Preview locally (open http://localhost:8000/decks/croktile-intro/)
+npm run dev
+
+# Build self-contained HTML
+npm run build:html
+
+# Build PDF (requires Chrome)
+npm run build:pdf
+
+# Build all formats
+npm run build
+```
+
 ## Repo Structure
 
 - `decks/` — Slide decks, each in `<name>/index.html` with `dist/` for build outputs
 - `themes/` — reveal.js CSS themes: `croktile-dark`
 - `assets/images/` — Shared logos and images
-- `scripts/build.py` — Build automation (self-contained HTML + PDF export)
+- `scripts/build.py` — Build automation for Linux/macOS (Python)
+- `scripts/build.js` — Build automation for Windows (Node.js, same functionality)
+- `scripts/serve.js` — Lightweight dev server for Windows (replaces `python3 -m http.server`)
 
 ## Deck Format
 
