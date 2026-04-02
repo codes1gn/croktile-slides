@@ -1,0 +1,10 @@
+{
+  "version": 0,
+  "timeEvents": [
+    {
+      "name": "safety-end",
+      "targetTime": 11.500000000000005
+    }
+  ],
+  "seed": 797191288
+}
