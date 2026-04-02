@@ -1,0 +1,362 @@
+{
+  "meta": {
+    "title": "CrokTile: Next-Gen GPU & DSA Kernel Language",
+    "voices": {
+      "zh": "zh-CN-YunxiNeural",
+      "en": "en-US-AndrewNeural"
+    },
+    "rate": { "zh": "+0%", "en": "+0%" },
+    "slide_url_base": "http://localhost:8000/decks/croktile-intro/index.html"
+  },
+  "slides": [
+    {
+      "index": 0,
+      "title": "Title",
+      "segments": [
+        {
+          "narration_zh": "大家好，今天给大家带来一门全新的下一代计算核编程语言——CrokTile。它专门面向 GPU 和 DSA 加速器，目标是用最少的代码写出最高性能的计算内核，同时让编译器帮你守住安全底线，还天然支持 AI agent 自动调优。接下来我们一起看看，CrokTile 到底强在哪里。",
+          "narration_en": "Hello everyone. Today we're introducing a brand-new next-generation compute kernel programming language — CrokTile. Purpose-built for GPUs and DSA accelerators, CrokTile lets you write the highest-performance compute kernels with minimal code, while the compiler safeguards correctness, and AI agents can auto-tune your code natively. Let's see what makes CrokTile stand out.",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "title": "Table of Contents",
+      "segments": [
+        {
+          "narration_zh": "今天的内容围绕四个核心亮点展开，而且在每一个方面，CrokTile 都做到了业内同类工具和语言中的最佳水平。第一，易用性——CrokTile 在 Triton、TileLang、CuTe、CUTLASS 等所有竞品中代码量最少、抽象层次最高。第二，编译期安全——CrokTile 是同类语言中唯一实现了从 shape、类型到同步分析的全方位编译期检查的方案，其他工具完全没有这个能力。第三，动态与符号化维度支持——CrokTile 是首个也是唯一支持命名符号维度、仿射表达式和编译期 shape 推断的内核语言。第四，天生为 AI 编程设计——CrokTile 在 token 密度、安全护栏和 AI 可解析性方面远超所有竞品，是当前最适合 AI agent 自动编写和调优内核的语言。",
+          "narration_en": "Today's presentation centers on four core highlights, and in every single one, CrokTile has achieved the best-in-class status among all competing tools and languages. First, ease of use — CrokTile requires the fewest lines of code and offers the highest abstraction level compared to Triton, TileLang, CuTe, CUTLASS, and all other alternatives. Second, compile-time safety — CrokTile is the only language in its class that provides comprehensive compile-time checking across shape, type, hardware constraints, and synchronization analysis. No other tool comes close. Third, dynamic and symbolic shape support — CrokTile is the first and only kernel language to support named symbolic dimensions, affine expressions, and compile-time shape inference. Fourth, AI-native programming — CrokTile far surpasses all competitors in token density, safety guardrails, and AI-parsable syntax, making it the most suitable language for AI agents to autonomously write and tune compute kernels.",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "title": "What is CrokTile?",
+      "segments": [
+        {
+          "narration_zh": "CrokTile 最核心的定位是，做最易用的内核编程语言。具体来说有四大特点。第一个是易用，零成本抽象让你不用牺牲性能。第二个是编译期安全，用类型系统和静态分析帮你抓 bug。第三个是支持动态和符号化的 shape，不用再硬编码维度。第四个是天生为 AI 设计，AI agent 可以自主编写和优化内核。",
+          "narration_en": "CrokTile positions itself as the most easy-to-use kernel programming language. It has four core features. First, ease of use — zero-cost abstractions that don't sacrifice performance. Second, compile-time safety with type systems and static analysis. Third, dynamic and symbolic shape support so you don't have to hardcode dimensions. And fourth, it's designed from the ground up for AI agents to write and optimize kernels autonomously.",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "title": "Chapter 1 — Easy to Use",
+      "segments": [
+        {
+          "narration_zh": "首先来看第一个亮点：易用性。CrokTile 在易用性方面全面超越 Triton、CuTe、Cutile 和 Helion 等现有方案。",
+          "narration_en": "Let's start with the first highlight: ease of use. CrokTile outperforms all existing solutions including Triton, CuTe, Cutile, and Helion in terms of usability.",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "title": "Easy to Use — Code Comparison",
+      "segments": [
+        {
+          "narration_zh": "这里我们用一个经典的持久化 warp-specialized GEMM 内核做对比。左边的柱状图非常直观——TileLang 最短只要 22 行，CrokTile 36 行，而 Triton 需要 64 行，CUDA 加 CuTe 要 182 行，CUTLASS 更是高达 280 行。代码量只有 CUDA 的 40%。右边我们来看看具体的代码实现。CrokTile 的 Hilbert matmul 代码非常清晰，tensor 声明直接写 shape，TMA 拷贝一行搞定，MMA 计算几行就完成了。",
+          "narration_en": "Here we compare using a classic persistent warp-specialized GEMM kernel. The bar chart on the left tells the story clearly — TileLang is shortest at 22 lines, CrokTile at 36 lines, while Triton needs 64 lines, CUDA plus CuTe takes 182 lines, and CUTLASS reaches 280 lines. CrokTile uses just 40 percent of equivalent CUDA code. On the right, let's look at the actual implementation. CrokTile's Hilbert matmul code is remarkably clean — tensor declarations include their shape directly, TMA copies are single-line, and the MMA computation takes just a few lines.",
+          "actions": [{ "type": "click_tab", "tab": "Croktile" }]
+        },
+        {
+          "narration_zh": "切换到 Triton 的实现来对比。你可以看到，Triton 需要手动管理指针、步长、偏移量，光是地址计算就占了好几行。虽然 Triton 已经比 CUDA 简洁很多，但仍然要手动拼偏移、管理 mask。",
+          "narration_en": "Now switching to Triton's implementation for comparison. You can see that Triton requires manual pointer management, strides, and offsets — address computation alone takes several lines. While Triton is already much more concise than CUDA, you still have to manually compose offsets and manage masks.",
+          "actions": [{ "type": "click_tab", "tab": "Triton" }]
+        },
+        {
+          "narration_zh": "再来看 CUDA 加 CuTe 的版本。这里就能看到复杂度的急剧增长——TMA 描述符创建、barrier 初始化、共享内存手动分配、WGMMA 描述符配置，所有底层细节都暴露给程序员。这 182 行代码里到处都是出错的机会。这就是为什么 CrokTile 的高层抽象如此重要。",
+          "narration_en": "And here's the CUDA plus CuTe version. You can see the dramatic increase in complexity — TMA descriptor creation, barrier initialization, manual shared memory allocation, WGMMA descriptor configuration. All low-level details are exposed to the programmer. Within these 182 lines there are countless opportunities for bugs. This is exactly why CrokTile's high-level abstractions matter so much.",
+          "actions": [{ "type": "click_tab", "tab": "CUDA + CuTe" }]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "title": "Work on Tensors, Not Buffers",
+      "segments": [
+        {
+          "narration_zh": "CrokTile 的核心设计理念之一是：你应该操作张量，而不是操作缓冲区。在 CrokTile 中，一个张量的声明只需要三样东西：存储位置、数据类型和 shape。不需要步长，不需要 Layout，不需要偏移量，不需要原始指针。看下面的对比表格——CrokTile 只暴露 shape，而 Triton 还需要步长、偏移和原始指针，CuTe 更是需要完整的 Layout。",
+          "narration_en": "One of CrokTile's core design principles is that you should work on tensors, not buffers. In CrokTile, declaring a tensor requires only three things: memory specifier, data type, and shape. No strides, no layouts, no offsets, no raw pointers. The comparison table below makes this clear — CrokTile exposes only shape, while Triton additionally requires strides, offsets, and raw pointers, and CuTe needs the full layout specification.",
+          "actions": [{ "type": "click_tab", "tab": "Croktile" }]
+        },
+        {
+          "narration_zh": "我们切到 Triton 的代码来看。你可以看到即使是声明一个 tensor 输入，也需要传入指针、每个维度的步长。然后在计算时，需要手动用 arange 构造偏移量，做指针算术。这些细节在 CrokTile 中全部由编译器自动处理。",
+          "narration_en": "Let's switch to Triton's code. Even just declaring a tensor input requires passing the pointer and strides for each dimension. Then during computation, you need to manually construct offsets with arange and do pointer arithmetic. All of these details are handled automatically by CrokTile's compiler.",
+          "actions": [{ "type": "click_tab", "tab": "Triton" }]
+        },
+        {
+          "narration_zh": "CuTe 的情况更加典型。每个 tensor 都需要一个 Layout，由 Shape 和 Stride 组合而成。make_tensor 需要指针加 Layout，分 tile 需要 local_tile 加坐标，共享内存还要单独写一遍 Layout。这些底层操作在 CrokTile 里只需要直接声明 shape 就完成了。",
+          "narration_en": "CuTe is even more involved. Every tensor needs a Layout composed of Shape and Stride. make_tensor requires a pointer plus Layout, tiling needs local_tile with coordinates, and shared memory requires its own separate Layout definition. In CrokTile, all of this is replaced by simply declaring the shape.",
+          "actions": [{ "type": "click_tab", "tab": "CuTe / CUTLASS" }]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "title": "No Manual TMA/DMA Management",
+      "segments": [
+        {
+          "narration_zh": "CrokTile 的 TMA 拷贝只需要一行代码。tma.copy.swiz 加上源和目标，就完成了异步数据搬运。swizzle 模式自动选择，barrier 管理自动处理。不需要创建 CUtensorMap 描述符，不需要手动管理 fence 和 wait。从柱状图看，CrokTile 只要 2 行，而 CUDA 需要 35 行。",
+          "narration_en": "CrokTile's TMA copy requires just one line of code. tma.copy.swiz with source and destination — that's it for async data transfer. Swizzle mode is selected automatically, barrier management is handled implicitly. No CUtensorMap descriptor creation, no manual fence and wait management. The bar chart shows CrokTile needs just 2 lines versus CUDA's 35 lines.",
+          "actions": [{ "type": "click_tab", "tab": "Croktile" }]
+        },
+        {
+          "narration_zh": "我们看看 CUDA 的实现。首先在 host 端需要调用 cuTensorMapEncodeTiled 创建 TMA 描述符，配置形状、步长、box 大小、interleave 模式、swizzle 模式等一系列参数。然后在 device 端还要初始化 barrier、设置 fence、执行拷贝、再做 arrive_and_wait。35 行代码里任何一行出错都会导致难以调试的问题。这就是 CrokTile 一行代码背后的价值。",
+          "narration_en": "Let's see CUDA's implementation. First on the host side, you need to call cuTensorMapEncodeTiled to create the TMA descriptor, configuring shape, strides, box size, interleave mode, swizzle mode, and more. Then on the device side, you initialize the barrier, set up the fence, execute the copy, and do arrive_and_wait. Any mistake in these 35 lines leads to hard-to-debug problems. This is the value behind CrokTile's single line of code.",
+          "actions": [{ "type": "click_tab", "tab": "CUDA" }]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "title": "Tensor Core MMA",
+      "segments": [
+        {
+          "narration_zh": "Tensor Core 的矩阵乘法运算，在 CrokTile 中是一个完整的五行周期。mma.fill 初始化累加器，mma.load 加载两个操作数，mma.row.row 执行矩阵乘法，最后 mma.store 写回结果。编译器会根据目标架构自动选择 HMMA 还是 WGMMA 指令，shape 和数据类型约束在编译期就检查完毕。",
+          "narration_en": "Tensor Core matrix multiply in CrokTile is a complete five-line cycle. mma.fill initializes the accumulator, mma.load loads both operands, mma.row.row performs the matrix multiply, and mma.store writes back the result. The compiler automatically selects HMMA or WGMMA instructions based on the target architecture, and shape and dtype constraints are verified at compile time.",
+          "actions": [{ "type": "click_tab", "tab": "Croktile" }]
+        },
+        {
+          "narration_zh": "在 Triton 和 TileLang 中，MMA 调用也比较简洁，各只需要 3 行左右。但注意，CrokTile 的 5 行虽然稍多，却提供了更细粒度的控制，你可以单独控制加载和计算步骤。切到 CUDA 来看区别就更明显了——需要手动创建 WGMMA 描述符，写内联 PTX 汇编，配置 fence 和 commit，加起来 25 行。",
+          "narration_en": "In Triton and TileLang, MMA calls are also fairly concise at about 3 lines each. But note that CrokTile's 5 lines, while slightly more, provide finer-grained control — you can independently control the load and compute steps. Switching to CUDA makes the difference even more dramatic — you need to manually create WGMMA descriptors, write inline PTX assembly, configure fences and commits, totaling 25 lines.",
+          "actions": [{ "type": "click_tab", "tab": "CUDA" }]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "title": "Structured Sparse MMA",
+      "segments": [
+        {
+          "narration_zh": "CrokTile 对结构化稀疏计算的支持特别优雅。在普通的 MMA 基础上，只需要加一个 .sp 修饰符就能启用 2:4 结构化稀疏。Metadata 的加载和预打包全部由编译器自动处理，包括 ColumnMajorInterleaved 布局变换和 warp shuffle 交换。这是竞品中独一无二的能力。",
+          "narration_en": "CrokTile's support for structured sparse computation is particularly elegant. On top of the regular MMA, just adding a .sp modifier enables 2:4 structured sparsity. Metadata loading and prepacking are entirely handled by the compiler, including ColumnMajorInterleaved layout transformation and warp shuffle exchange. This is a unique capability among competitors.",
+          "actions": [{ "type": "click_tab", "tab": "Croktile" }]
+        },
+        {
+          "narration_zh": "值得注意的是，Triton 完全不支持结构化稀疏 MMA——这是其编程模型的根本局限。如果在 Triton 中需要用稀疏 tensor core，你不得不退回到原始的 PTX 内联汇编。而 CUDA 需要 30 行代码来手动处理 metadata 的预打包和 warp shuffle，这些在 CrokTile 里完全自动化了。",
+          "narration_en": "It's worth noting that Triton has absolutely no support for structured sparse MMA — this is a fundamental limitation of its programming model. If you need sparse tensor cores in Triton, you have to fall back to raw PTX inline assembly. CUDA needs 30 lines to manually handle metadata prepacking and warp shuffles, all of which is fully automated in CrokTile.",
+          "actions": [{ "type": "click_tab", "tab": "Triton ✗" }]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "title": "Parallel Programs Made Simple",
+      "segments": [
+        {
+          "narration_zh": "CrokTile 用一个统一的 parallel-by 抽象来表达所有级别的并行性。只需要两个原语——parallel-by 和 foreach。通过指定 block、group-4、thread 这样的级别修饰符，同一套语法可以映射到 NVIDIA、AMD 和自定义 DSA 加速器。甚至还支持 mpi 级别的多设备并行。相比之下，CUDA 需要 8 个不同的并行原语。",
+          "narration_en": "CrokTile uses a unified parallel-by abstraction for all levels of parallelism. Just two primitives — parallel-by and foreach. By specifying level modifiers like block, group-4, or thread, the same syntax maps to NVIDIA, AMD, and custom DSA accelerators. It even supports MPI-level multi-device parallelism. In contrast, CUDA requires 8 different parallelism primitives.",
+          "actions": [{ "type": "click_tab", "tab": "Croktile" }]
+        },
+        {
+          "narration_zh": "Triton 的并行模型相对简单，但功能也更受限。它没有 warp group 级别的控制，也不支持 warp specialization。CUDA 虽然功能最全，但需要程序员同时管理 blockIdx、threadIdx、blockDim、gridDim、__syncthreads、cooperative_groups、launch config 和 stream 这 8 个不同层面的抽象。",
+          "narration_en": "Triton's parallel model is relatively simple but more limited. It lacks warp group level control and doesn't support warp specialization. CUDA offers the most features but requires programmers to manage eight different abstraction layers simultaneously — blockIdx, threadIdx, blockDim, gridDim, syncthreads, cooperative groups, launch config, and streams.",
+          "actions": [{ "type": "click_tab", "tab": "CUDA" }]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "title": "Optimization Patterns",
+      "segments": [
+        {
+          "narration_zh": "CrokTile 把所有常见的 GPU 优化模式都做成了一等语言构造。这里展示的每一种 pattern 都来自真实的生产内核。首先是持久化内核，通过 parallel block_id by NUM_SMS 加上 foreach 循环，就能实现 tile 在 SM 间的循环调度。高亮的部分就是关键行——总 tile 数计算、block 分配、每轮的 tile 映射。",
+          "narration_en": "CrokTile turns all common GPU optimization patterns into first-class language constructs. Every pattern shown here comes from real production kernels. First, the persistent kernel — using parallel block_id by NUM_SMS with a foreach loop achieves tile round-robin scheduling across SMs. The highlighted lines show the key parts — total tile count, block assignment, and per-iteration tile mapping.",
+          "actions": [{ "type": "click_tab", "tab": "Persistent Kernel" }]
+        },
+        {
+          "narration_zh": "Producer-Consumer 模式用于 warp 特化。通过 parallel by 3 group-4 划分出 1 个 producer 和 2 个 consumer warp group。inthreads.async 声明异步执行，shared event 用于同步——wait 和 trigger 对应消费者和生产者的握手。这种复杂的异步流水线在 CUDA 中通常需要上百行手动同步代码。",
+          "narration_en": "The Producer-Consumer pattern is for warp specialization. Using parallel by 3 group-4 creates 1 producer and 2 consumer warp groups. inthreads.async declares asynchronous execution, and shared events handle synchronization — wait and trigger correspond to the consumer-producer handshake. This kind of complex async pipeline typically requires hundreds of lines of manual synchronization code in CUDA.",
+          "actions": [{ "type": "click_tab", "tab": "Producer-Consumer" }]
+        },
+        {
+          "narration_zh": "再看一下 double buffering 和 tiling 模式。双缓冲通过 swap 原语交换两组 future 引用，三缓冲用 rotate 做循环。Tiling 模式则通过 define 宏加上 subspan 和 chunkat 实现多层次分块。所有这些模式在 CrokTile 中都是组合式的，你可以自由叠加使用。",
+          "narration_en": "Let's also look at double buffering and tiling patterns. Double buffering uses the swap primitive to exchange two future references, while triple buffering uses rotate for cycling. Tiling patterns use define macros combined with subspan and chunkat for multi-level blocking. All these patterns in CrokTile are composable — you can freely stack and combine them.",
+          "actions": [{ "type": "click_tab", "tab": "Double Buffering" }]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "title": "C++ Integration",
+      "segments": [
+        {
+          "narration_zh": "CrokTile 和 C++ 的集成是无缝的。你用 __co__ 标记的内核函数可以像普通 C++ 函数一样被调用——不需要配置 grid、block，不需要手动管理 stream。编译器自动生成 host wrapper，处理类型转换、内存对齐、TMA 描述符创建。甚至内置了 choreo::timing 性能测试工具，支持 warmup 和 repeat。整个编译通过 choreo 命令行生成标准 .cu 文件，和 nvcc 完全兼容。",
+          "narration_en": "CrokTile integrates seamlessly with C plus plus. Kernel functions marked with __co__ can be called like ordinary C++ functions — no grid or block configuration needed, no manual stream management. The compiler auto-generates host wrappers, handles type conversion, memory alignment, and TMA descriptor creation. It even includes a built-in choreo::timing profiling tool with warmup and repeat support. The whole compilation produces standard .cu files through the choreo command line, fully compatible with nvcc.",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "title": "Chapter 2 — Compile-Time Safety",
+      "segments": [
+        {
+          "narration_zh": "接下来看第二个亮点：编译期代码安全。CrokTile 的编译器会在代码运行之前就帮你发现大量潜在的 bug。",
+          "narration_en": "Now let's look at the second highlight: compile-time code safety. CrokTile's compiler catches a wide range of potential bugs before your code ever runs.",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "title": "Compile-Time Checks",
+      "segments": [
+        {
+          "narration_zh": "CrokTile 编译器能在编译期检测四大类错误。第一类是 shape 和类型不匹配——比如你把一个 f32 tensor 通过 DMA 拷贝到 f16 的目标，或者 rank 不一致，编译器直接报错。第二类是越界访问——静态索引分析能在编译时就发现缓冲区溢出。这两类错误在 CUDA 中都是 silent bug，可能运行几百次才偶尔出问题。",
+          "narration_en": "CrokTile's compiler detects four major categories of errors at compile time. First, shape and type mismatches — if you DMA copy an f32 tensor to an f16 destination, or the ranks don't match, the compiler reports an error immediately. Second, out-of-bounds access — static index analysis catches buffer overruns at compile time. Both of these errors are silent bugs in CUDA that might only manifest sporadically across hundreds of runs.",
+          "actions": [{ "type": "click_tab", "tab": "Shape Mismatch" }]
+        },
+        {
+          "narration_zh": "第三类是硬件约束校验——比如你用了 SM_86 不支持的 MMA 指令配置，CUDA 中这会导致 GPU 挂起而没有任何诊断信息。CrokTile 编译器直接告诉你哪个 MMA 配置和哪个架构不兼容。第四类是同步分析——异步 future 如果没有被 wait 就离开作用域，编译器会标记出来，防止死锁和数据竞争。这些检查在 CUDA 中需要靠程序员人工排查，经常要花好几天才找到 bug。",
+          "narration_en": "Third is hardware constraint validation — using an MMA instruction config unsupported by SM_86 causes a GPU hang in CUDA with no diagnostics. CrokTile's compiler tells you exactly which MMA configuration is incompatible with which architecture. Fourth is synchronization analysis — async futures that leave scope without being waited are flagged, preventing deadlocks and data races. In CUDA, these checks require manual debugging that can take days to resolve.",
+          "actions": [{ "type": "click_tab", "tab": "HW Constraints" }]
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "title": "Auto-Generated Runtime Assertions",
+      "segments": [
+        {
+          "narration_zh": "对于涉及动态维度的场景，编译器会自动生成 host 端的 runtime assertion。这些断言在 GPU 内核启动之前就执行检查。比如，当两个参数共享同一个符号维度 K 时，编译器自动检查它们的实际 shape 是否一致。静态维度也会被验证，确保运行时传入的 tensor 尺寸和编译时声明的常量匹配。",
+          "narration_en": "For scenarios involving dynamic dimensions, the compiler auto-generates host-side runtime assertions. These checks execute before GPU kernel launch. For example, when two parameters share the same symbolic dimension K, the compiler automatically verifies their actual shapes match. Static dimensions are also validated, ensuring runtime tensor sizes match compile-time declared constants.",
+          "actions": [{ "type": "click_tab", "tab": "Shape Consistency" }]
+        },
+        {
+          "narration_zh": "除了形状检查，编译器还会自动生成内存预算检查和分块合法性检查。它会追踪所有动态分配的累积大小，确保不超过硬件内存限制。同时验证 parallel-by 的 bounds 大于零、tile count 非零，防止除零错误。在 CUDA 中，这些场景都是程序员自己负责——shape 不对就是 silent wrong result，内存溢出就是 GPU hang。",
+          "narration_en": "Beyond shape checks, the compiler auto-generates memory budget checks and tiling validity checks. It tracks cumulative dynamic allocations to ensure they don't exceed hardware memory limits. It also verifies parallel-by bounds are greater than zero and tile counts are non-zero, preventing division by zero. In CUDA, all of this is the programmer's responsibility — shape mismatches produce silent wrong results, memory overflow causes GPU hangs.",
+          "actions": [{ "type": "click_tab", "tab": "Memory Budget" }]
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "title": "Safety Statistics",
+      "segments": [
+        {
+          "narration_zh": "把所有安全机制加在一起，CrokTile 编译器目前实现了 353 条编译期诊断检查和 1319 条运行时断言。这些检查分布在 7 个编译器模块中——从早期语义分析的 189 条，到语义校验的 65 条，类型推断 38 条，shape 推断 33 条，直到代码生成阶段的 8 条。目标很简单：zero silent bugs。在 CrokTile 中，不可能出现 CUDA 中那种默默算错但不报错的情况。",
+          "narration_en": "Adding up all safety mechanisms, CrokTile's compiler currently implements 353 compile-time diagnostic checks and 1,319 runtime assertions. These checks span 7 compiler modules — from 189 checks in early semantic analysis, to 65 in semantic validation, 38 in type inference, 33 in shape inference, down to 8 in code generation. The goal is simple: zero silent bugs. In CrokTile, the kind of silent wrong results you get in CUDA simply cannot happen.",
+          "actions": [{ "type": "click_tab", "tab": "earlysema.cpp" }]
+        }
+      ]
+    },
+    {
+      "index": 16,
+      "title": "Chapter 3 — Dynamic Shapes",
+      "segments": [
+        {
+          "narration_zh": "第三个亮点是 CrokTile 对动态和符号化 shape 的支持。这是同类语言中首创的能力。",
+          "narration_en": "The third highlight is CrokTile's support for dynamic and symbolic shapes. This is a first-of-its-kind capability among similar languages.",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    },
+    {
+      "index": 17,
+      "title": "Symbolic Dimensions",
+      "segments": [
+        {
+          "narration_zh": "在 CrokTile 中，M、K、N 是一等符号。它们出现在函数签名中，编译器会自动追踪它们的关系。比如 lhs 是 M 乘 K，rhs 是 N 乘 K——因为 K 出现在两个参数里，编译器知道它们共享这个维度，并且会自动生成运行时校验来确保一致性。",
+          "narration_en": "In CrokTile, M, K, and N are first-class symbols. They appear in function signatures and the compiler automatically tracks their relationships. For example, lhs is M by K, rhs is N by K — because K appears in both parameters, the compiler knows they share this dimension and auto-generates runtime checks to ensure consistency.",
+          "actions": [{ "type": "click_tab", "tab": "Named Dims" }]
+        },
+        {
+          "narration_zh": "CrokTile 还支持符号之间的仿射表达式和跨参数约束关系。比如在稀疏矩阵乘法中，PACKED_K 等于 K 除以 2，META_COLS 等于 K 除以 8，编译器会自动追踪这些衍生关系。where k <-> k1 语法可以声明两个循环变量的同步约束。另外，动态尾部处理也是自动的——编译器会生成带 predicate 的拷贝和 zero-fill，无需手动写 mask。",
+          "narration_en": "CrokTile also supports affine expressions between symbols and cross-parameter constraints. In sparse matrix multiply, PACKED_K equals K divided by 2, META_COLS equals K divided by 8 — the compiler tracks all derived relationships automatically. The where k <-> k1 syntax declares lockstep iteration constraints. Dynamic tail handling is also automatic — the compiler generates predicated copies with zero-fill, no manual masking needed.",
+          "actions": [{ "type": "click_tab", "tab": "Affine Derived" }]
+        },
+        {
+          "narration_zh": "最后来看编译器的 shape 推断输出。编译器会自动推导出每个参数的类型信息、tiling 范围、chunk 形状和函数签名。这是 CrokTile 独有的能力——其他所有竞品都不支持命名符号、仿射表达式、跨参数约束和编译期推断的组合。右边的对比表格清楚地展示了这一优势。",
+          "narration_en": "Finally, let's look at the compiler's shape inference output. The compiler automatically derives type information for each parameter, tiling bounds, chunk shapes, and function signatures. This is unique to CrokTile — no other competitor supports the combination of named symbols, affine expressions, cross-parameter constraints, and compile-time inference. The comparison table on the right clearly shows this advantage.",
+          "actions": [{ "type": "click_tab", "tab": "Shape Inference" }]
+        }
+      ]
+    },
+    {
+      "index": 18,
+      "title": "Memory Access Primitives",
+      "segments": [
+        {
+          "narration_zh": "CrokTile 提供了一套灵活的内存访问原语。chunkat 是最常用的，按固定大小的 tile 索引访问，适合规则的网格计算。subspan/at 提供显式的子视图声明，特别适合 TMA 拷贝。view/from 支持动态偏移的窗口访问，适合 MoE 这类不规则访问模式。span_as 做无拷贝的 reshape，井号运算符用于层级化索引组合。",
+          "narration_en": "CrokTile provides a flexible set of memory access primitives. chunkat is the most common — accessing by fixed-size tile index, ideal for regular grid computation. subspan/at provides explicit sub-view declaration, perfect for TMA copies. view/from supports dynamic offset window access, ideal for irregular patterns like MoE. span_as does zero-copy reshape, and the hash operator composes hierarchical indices.",
+          "actions": [{ "type": "click_tab", "tab": "chunkat" }]
+        },
+        {
+          "narration_zh": "比较有特色的是 view/from 原语。它允许你用任意运行时偏移量来创建一个视图窗口。在 MoE 场景中，每个 expert 处理的 segment 长度不同，通过 view/from 加上 .zfill 修饰符，超出边界的元素自动填零。在 CUDA 中实现同样的功能需要手动做指针算术和边界夹断，而且没有越界检查。",
+          "narration_en": "The view/from primitive is particularly noteworthy. It allows creating a view window with arbitrary runtime offsets. In MoE scenarios where each expert processes segments of different lengths, view/from combined with the .zfill modifier automatically zero-fills out-of-bounds elements. Implementing the same in CUDA requires manual pointer arithmetic and boundary clamping with no bounds checking.",
+          "actions": [{ "type": "click_tab", "tab": "view/from" }]
+        }
+      ]
+    },
+    {
+      "index": 19,
+      "title": "Chapter 4 — Born for AI",
+      "segments": [
+        {
+          "narration_zh": "最后来看第四个亮点：CrokTile 天生为 AI Agent 编程而设计。它具备出色的上下文工程和 harness 工程能力。",
+          "narration_en": "Finally, let's look at the fourth highlight: CrokTile is designed from the ground up for AI agent programming. It excels in both context engineering and harness engineering.",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "title": "Born for AI Tuning",
+      "segments": [
+        {
+          "narration_zh": "这是一个真实案例。我们给 AI 一个简单的提示，让它在已有分支上继续实验优化 FP8 sparse GEMM 内核。AI 会先分析参考分支的优化历史，找出关键技巧，然后一步一步迭代。",
+          "narration_en": "This is a real-world case study. We give the AI a simple prompt to continue optimizing an FP8 sparse GEMM kernel on an existing branch. The AI first analyzes the optimization history from reference branches, identifies key techniques, then iterates step by step.",
+          "actions": [{ "type": "click_tab", "tab": "AI Prompt" }]
+        },
+        {
+          "narration_zh": "AI 会系统性地分析参考分支的每一步优化效果。比如 TMA metadata staging 带来 13% 的提升，1p2c warp specialization 带来 9%，3-stage pipeline 带来 24%。然后它从当前的 400 TFLOPS baseline 开始，通过 NCU 分析瓶颈，选择下一步优化策略。",
+          "narration_en": "The AI systematically analyzes the optimization impact of each step in the reference branches. For example, TMA metadata staging yields a 13 percent improvement, 1p2c warp specialization adds 9 percent, and 3-stage pipeline brings 24 percent. Starting from the current 400 TFLOPS baseline, it uses NCU profiling to identify bottlenecks and choose the next optimization strategy.",
+          "actions": [{ "type": "click_tab", "tab": "AI Analysis" }]
+        },
+        {
+          "narration_zh": "右下角的表格展示了 E4M3 sparse GEMM 在 H800 PCIe 上的迭代结果。从 671 TFLOPS 的 baseline 开始，经过 68 轮 AI 自动迭代，最终达到 1127 TFLOPS。提升了 67.9%。而且 AI 可以连续迭代 200 多轮而不出错——这得益于 CrokTile 的编译期安全保障。每轮迭代平均只需 3 分钟：编辑 .co 文件、编译、运行、分析 NCU。",
+          "narration_en": "The table on the lower right shows iteration results for E4M3 sparse GEMM on H800 PCIe. Starting from a baseline of 671 TFLOPS, after 68 AI-driven iterations, the performance reached 1127 TFLOPS — a 67.9 percent improvement. The AI completed over 200 iterations without a single failure, thanks to CrokTile's compile-time safety guarantees. Each iteration takes just about 3 minutes on average: edit the .co file, compile, run, and analyze with NCU.",
+          "actions": [{ "type": "click_tab", "tab": "Iteration Loop" }]
+        }
+      ]
+    },
+    {
+      "index": 21,
+      "title": "Superior Context Engineering",
+      "segments": [
+        {
+          "narration_zh": "为什么 CrokTile 天然适合 AI 调优？核心原因是出色的上下文工程。第一，CrokTile 的 token 密度最高——25 行内核只占大约 500 个 token，每个 token 都携带优化相关的语义信息，而不是样板代码。第二，统一的原语意味着 AI 只需要推理意图，不需要选择具体指令。第三，语法规整、可解析性强，AI 能理解代码结构而不仅仅是模式匹配。第四，编译期安全检查加速了反馈循环——无效的修改立刻被拒绝，避免 AI 在无效方向上浪费上下文。",
+          "narration_en": "Why is CrokTile naturally suited for AI tuning? The core reason is superior context engineering. First, CrokTile has the highest token density — a 25-line kernel takes only about 500 tokens, where every token carries optimization-relevant semantics rather than boilerplate. Second, unified primitives mean AI only reasons about intent, not instruction selection. Third, the clean and regular syntax enables AI to understand code structure, not just pattern-match. Fourth, compile-time safety checks accelerate the feedback loop — invalid changes are rejected immediately, preventing wasted context on dead-end approaches.",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    },
+    {
+      "index": 22,
+      "title": "Superior Harness Engineering",
+      "segments": [
+        {
+          "narration_zh": "在 harness 工程方面，CrokTile 的编译器就是最好的 AI 护栏。353 条编译期检查加上 1319 条运行时断言，没有任何一个错误会退化为不透明的运行时 bug。对比表格很能说明问题——CrokTile 中无效内核是编译期错误，CUDA 中是 silent bug。CrokTile 的 TMA 只有 1 个原语，CUDA 有 5 个以上的配置步骤。AI 连续迭代 200 多轮不崩溃，而 CUDA 经常 hang。编译器就是 harness——它通过让无效程序无法编译来减少 AI 的随机性。",
+          "narration_en": "On harness engineering, CrokTile's compiler serves as the ultimate AI guardrail. 353 compile-time checks plus 1,319 runtime assertions mean no error can degrade into an opaque runtime bug. The comparison table is telling — invalid kernels are compile-time errors in CrokTile versus silent bugs in CUDA. CrokTile's TMA requires 1 primitive versus CUDA's 5-plus setup steps. AI iterates over 200 rounds without crashes, while CUDA frequently hangs. The compiler IS the harness — it reduces AI randomness by making invalid programs impossible to compile.",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    },
+    {
+      "index": 23,
+      "title": "Closing",
+      "segments": [
+        {
+          "narration_zh": "总结一下。CrokTile 用 CUDA 40% 的代码量实现同等功能。在 AI 自动调优下性能比 baseline 快 83%。支持 200 轮以上的自主 AI 迭代不出故障。在 dense GEMM 上达到 cuBLAS 100.5% 的性能。更少的代码，更安全的内核，天然的 AI 就绪。感谢观看！",
+          "narration_en": "To summarize. CrokTile achieves equivalent functionality with just 40 percent of CUDA code. AI auto-tuning achieves 83 percent faster than baseline. Over 200 autonomous AI iterations run without failure. Dense GEMM reaches 100.5 percent of cuBLAS performance. Fewer lines, safer kernels, AI-ready. Thank you for watching!",
+          "actions": [{ "type": "wait" }]
+        }
+      ]
+    }
+  ]
+}
