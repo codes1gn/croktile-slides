@@ -530,6 +530,133 @@ int main() {
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 11b: Zero-Cost Abstraction                       -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="dense">
+  <div class="slide-header">
+    <img src="../../assets/images/logo-2.png" alt="">
+    <span class="header-title">CrokTile</span>
+    <span class="header-sep">|</span>
+    <span class="header-section">Chapter 1 — Easy to Use</span>
+  </div>
+  <div class="slide-footer">
+    <span class="footer-brand">CrokTile — The Next-Gen GPU &amp; DSA Language</span>
+    <span class="footer-right">github.com/croktile</span>
+  </div>
+  <h2>Zero-Cost Abstraction</h2>
+  <p style="margin-top:-4px;font-size:0.72em;color:var(--fg-secondary);">CrokTile matches highly-optimized vendor libraries &mdash; higher-level syntax, <strong>near-zero performance gap</strong></p>
+
+  <div class="split" style="gap:24px;margin-top:10px;">
+    <!-- Left: Kernel-level benchmark -->
+    <div>
+      <h3 style="font-size:0.78em;margin-bottom:8px;color:var(--mint-700);">Kernel-Level Performance</h3>
+      <p style="font-size:0.52em;color:var(--fg-secondary);margin-bottom:8px;">Standalone kernel throughput (TFLOPS, higher is better) &mdash; CrokTile vs vendor libraries (Hopper)</p>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <!-- GEMM FP16 -->
+        <div style="font-size:0.5em;font-weight:600;color:var(--fg);margin-bottom:1px;">GEMM &nbsp;<span style="font-weight:400;color:var(--fg-secondary);">FP16, 8192&times;8192&times;8192</span></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px;font-size:0.48em;">
+          <span style="text-align:right;color:var(--fg-secondary);font-weight:600;">CrokTile</span>
+          <div style="height:16px;border-radius:4px;background:var(--mint-500);width:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#fff;font-weight:700;">471.3 TFLOPS</div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px;font-size:0.48em;">
+          <span style="text-align:right;color:var(--fg-secondary);font-weight:600;">PyTorch</span>
+          <div style="height:16px;border-radius:4px;background:#64748b;width:95%;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#fff;font-weight:700;">447.5 TFLOPS</div>
+        </div>
+        <div style="margin-left:86px;font-size:0.42em;color:var(--mint-600);font-weight:700;">105.3% of PyTorch</div>
+
+        <!-- GEMM FP8 Blockscale -->
+        <div style="font-size:0.5em;font-weight:600;color:var(--fg);margin-top:4px;margin-bottom:1px;">GEMM &nbsp;<span style="font-weight:400;color:var(--fg-secondary);">FP8 Blockscale, 256&times;5120&times;2048</span></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px;font-size:0.48em;">
+          <span style="text-align:right;color:var(--fg-secondary);font-weight:600;">CrokTile</span>
+          <div style="height:16px;border-radius:4px;background:var(--mint-500);width:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#fff;font-weight:700;">262.7 TFLOPS</div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px;font-size:0.48em;">
+          <span style="text-align:right;color:var(--fg-secondary);font-weight:600;">SGLang CUTLASS</span>
+          <div style="height:16px;border-radius:4px;background:#64748b;width:98%;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#fff;font-weight:700;">256.9 TFLOPS</div>
+        </div>
+        <div style="margin-left:86px;font-size:0.42em;color:var(--mint-600);font-weight:700;">102.2% of SGLang CUTLASS</div>
+
+        <!-- SPMM FP16 -->
+        <div style="font-size:0.5em;font-weight:600;color:var(--fg);margin-top:4px;margin-bottom:1px;">SPMM &nbsp;<span style="font-weight:400;color:var(--fg-secondary);">FP16, 4096&times;8192&times;8192</span></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px;font-size:0.48em;">
+          <span style="text-align:right;color:var(--fg-secondary);font-weight:600;">CrokTile</span>
+          <div style="height:16px;border-radius:4px;background:var(--mint-500);width:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#fff;font-weight:700;">630.5 TFLOPS</div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px;font-size:0.48em;">
+          <span style="text-align:right;color:var(--fg-secondary);font-weight:600;">cuSparseLt</span>
+          <div style="height:16px;border-radius:4px;background:#64748b;width:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#fff;font-weight:700;">628.5 TFLOPS</div>
+        </div>
+        <div style="margin-left:86px;font-size:0.42em;color:var(--mint-600);font-weight:700;">100.3% of cuSparseLt</div>
+
+        <!-- SPMM FP8 E4M3 -->
+        <div style="font-size:0.5em;font-weight:600;color:var(--fg);margin-top:4px;margin-bottom:1px;">SPMM &nbsp;<span style="font-weight:400;color:var(--fg-secondary);">FP8 E4M3, 12288&times;12288&times;12288</span></div>
+        <div style="display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px;font-size:0.48em;">
+          <span style="text-align:right;color:var(--fg-secondary);font-weight:600;">CrokTile</span>
+          <div style="height:16px;border-radius:4px;background:var(--mint-500);width:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#fff;font-weight:700;">995.6 TFLOPS</div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;align-items:center;gap:6px;font-size:0.48em;">
+          <span style="text-align:right;color:var(--fg-secondary);font-weight:600;">cuSparseLt</span>
+          <div style="height:16px;border-radius:4px;background:#64748b;width:96%;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#fff;font-weight:700;">952.1 TFLOPS</div>
+        </div>
+        <div style="margin-left:86px;font-size:0.42em;color:var(--mint-600);font-weight:700;">104.6% of cuSparseLt</div>
+      </div>
+    </div>
+
+    <!-- Right: End-to-end model integration -->
+    <div>
+      <h3 style="font-size:0.78em;margin-bottom:8px;color:var(--mint-700);">End-to-End: Qwen3.5 on SGLang</h3>
+      <p style="font-size:0.52em;color:var(--fg-secondary);margin-bottom:6px;">CrokTile kernels integrated into SGLang &mdash; Hopper GPU</p>
+
+      <!-- Model 1: Qwen3.5 27B BF16 -->
+      <div style="margin-bottom:10px;">
+        <div style="font-size:0.52em;font-weight:700;color:var(--fg);margin-bottom:4px;">Qwen3.5 27B &nbsp;<span style="font-weight:400;color:var(--fg-secondary);">(BF16, Hopper &times;1)</span></div>
+        <table class="check-table" style="font-size:0.48em;">
+          <thead>
+            <tr><th>Metric</th><th>CrokTile</th><th>Native</th><th>Ratio</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Prefill (ktokens/s)</td><td><strong>5,498</strong></td><td>6,200</td><td>88.7%</td></tr>
+            <tr><td>Decode (tokens/s)</td><td><strong>26</strong></td><td>28</td><td>92.9%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Model 2: Qwen3.5 27B FP8 -->
+      <div style="margin-bottom:10px;">
+        <div style="font-size:0.52em;font-weight:700;color:var(--fg);margin-bottom:4px;">Qwen3.5 27B &nbsp;<span style="font-weight:400;color:var(--fg-secondary);">(FP8, Hopper &times;1)</span></div>
+        <table class="check-table" style="font-size:0.48em;">
+          <thead>
+            <tr><th>Metric</th><th>CrokTile</th><th>Native</th><th>Ratio</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Prefill (ktokens/s)</td><td><strong>6,500</strong></td><td>7,400</td><td>87.8%</td></tr>
+            <tr><td>Decode (tokens/s)</td><td><strong>37</strong></td><td>39</td><td>94.9%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background:var(--mint-50);border:1px solid var(--mint-100);border-radius:8px;padding:12px 14px;margin-top:8px;">
+        <p style="font-size:0.58em;font-weight:700;color:var(--mint-700);margin:0 0 6px;">Why Zero-Cost?</p>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:flex-start;gap:6px;font-size:0.48em;line-height:1.45;">
+            <span style="color:var(--mint-500);font-weight:900;">&#x2713;</span>
+            <span>CrokTile kernels <strong>competitive with</strong> highly-optimized vendor libraries (cuSparseLt, CUTLASS, PyTorch)</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:6px;font-size:0.48em;line-height:1.45;">
+            <span style="color:var(--mint-500);font-weight:900;">&#x2713;</span>
+            <span>No runtime overhead &mdash; <strong>static dispatch</strong>, no vtable, no interpreter</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:6px;font-size:0.48em;line-height:1.45;">
+            <span style="color:var(--mint-500);font-weight:900;">&#x2713;</span>
+            <span>End-to-end performance <strong>within 5%</strong> of native serving &mdash; with far simpler code</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
 <!-- SLIDE 12: Chapter 2 — Compile-Time Safety              -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <section class="chapter" data-background-color="#dbeafe">
