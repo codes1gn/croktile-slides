@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="195" font-family="Inter, sans-serif">
+<g transform="translate(42,22)">
+<text x="104" y="-7" text-anchor="middle" font-size="8" font-weight="bold" fill="#1a1a1a">Sensitivity to M (N=K=8192)</text>
+<line x1="0" x2="208" y1="135" y2="135" stroke="#e9ecef" stroke-width="0.4"/>
+<text x="-6" y="138" text-anchor="end" font-size="6" fill="#888">0</text>
+<line x1="0" x2="208" y1="115.71428571428572" y2="115.71428571428572" stroke="#e9ecef" stroke-width="0.4"/>
+<line x1="0" x2="208" y1="96.42857142857143" y2="96.42857142857143" stroke="#e9ecef" stroke-width="0.4"/>
+<text x="-6" y="99.42857142857143" text-anchor="end" font-size="6" fill="#888">400</text>
+<line x1="0" x2="208" y1="77.14285714285714" y2="77.14285714285714" stroke="#e9ecef" stroke-width="0.4"/>
+<line x1="0" x2="208" y1="57.85714285714286" y2="57.85714285714286" stroke="#e9ecef" stroke-width="0.4"/>
+<text x="-6" y="60.85714285714286" text-anchor="end" font-size="6" fill="#888">800</text>
+<line x1="0" x2="208" y1="38.57142857142857" y2="38.57142857142857" stroke="#e9ecef" stroke-width="0.4"/>
+<line x1="0" x2="208" y1="19.285714285714292" y2="19.285714285714292" stroke="#e9ecef" stroke-width="0.4"/>
+<text x="-6" y="22.285714285714292" text-anchor="end" font-size="6" fill="#888">1200</text>
+<line x1="0" x2="208" y1="0" y2="0" stroke="#e9ecef" stroke-width="0.4"/>
+<line x1="0" y1="0" x2="0" y2="135" stroke="#1a1a1a" stroke-width="0.6"/>
+<line x1="0" y1="135" x2="208" y2="135" stroke="#1a1a1a" stroke-width="0.6"/>
+<line x1="0" y1="135" x2="0" y2="139" stroke="#1a1a1a"/>
+<text x="0" y="148" text-anchor="middle" font-size="5.5" fill="#666">128</text>
+<line x1="47.09602859285723" y1="135" x2="47.09602859285723" y2="139" stroke="#1a1a1a"/>
+<text x="47.09602859285723" y="148" text-anchor="middle" font-size="5.5" fill="#666">384</text>
+<line x1="76.81031430714295" y1="135" x2="76.81031430714295" y2="139" stroke="#1a1a1a"/>
+<text x="76.81031430714295" y="148" text-anchor="middle" font-size="5.5" fill="#666">768</text>
+<line x1="118.85714285714288" y1="135" x2="118.85714285714288" y2="139" stroke="#1a1a1a"/>
+<text x="118.85714285714288" y="148" text-anchor="middle" font-size="5.5" fill="#666">2K</text>
+<line x1="178.28571428571428" y1="135" x2="178.28571428571428" y2="139" stroke="#1a1a1a"/>
+<text x="178.28571428571428" y="148" text-anchor="middle" font-size="5.5" fill="#666">8K</text>
+<line x1="208" y1="135" x2="208" y2="139" stroke="#1a1a1a"/>
+<text x="208" y="148" text-anchor="middle" font-size="5.5" fill="#666">16K</text>
+<text x="104" y="162" text-anchor="middle" font-size="7" fill="#1a1a1a">M</text>
+<text transform="rotate(-90)" x="-67.5" y="-32" text-anchor="middle" font-size="7" fill="#1a1a1a">TFLOPS</text>
+<polyline points="0.0,106.0 29.7,78.0 47.1,50.4 59.4,70.7 76.8,37.9 89.1,45.1 118.9,35.0 148.6,19.6 178.3,29.8 208.0,45.6" fill="none" stroke="#22c55e" stroke-width="1.5" />
+<circle cx="0.0" cy="106.0" r="2.5" fill="#22c55e"/>
+<circle cx="29.7" cy="78.0" r="2.5" fill="#22c55e"/>
+<circle cx="47.1" cy="50.4" r="2.5" fill="#22c55e"/>
+<circle cx="59.4" cy="70.7" r="2.5" fill="#22c55e"/>
+<circle cx="76.8" cy="37.9" r="2.5" fill="#22c55e"/>
+<circle cx="89.1" cy="45.1" r="2.5" fill="#22c55e"/>
+<circle cx="118.9" cy="35.0" r="2.5" fill="#22c55e"/>
+<circle cx="148.6" cy="19.6" r="2.5" fill="#22c55e"/>
+<circle cx="178.3" cy="29.8" r="2.5" fill="#22c55e"/>
+<circle cx="208.0" cy="45.6" r="2.5" fill="#22c55e"/>
+<polyline points="0.0,115.1 29.7,96.8 47.1,87.0 59.4,75.0 76.8,73.9 89.1,62.6 118.9,45.5 148.6,45.0 178.3,43.8 208.0,44.0" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4,2"/>
+<rect x="-2" y="113.1" width="4" height="4" fill="#64748b" transform="rotate(45,0.0,115.1)"/>
+<rect x="27.7" y="94.8" width="4" height="4" fill="#64748b" transform="rotate(45,29.7,96.8)"/>
+<rect x="45.1" y="85" width="4" height="4" fill="#64748b" transform="rotate(45,47.1,87.0)"/>
+<rect x="57.4" y="73" width="4" height="4" fill="#64748b" transform="rotate(45,59.4,75.0)"/>
+<rect x="74.8" y="71.9" width="4" height="4" fill="#64748b" transform="rotate(45,76.8,73.9)"/>
+<rect x="87.1" y="60.6" width="4" height="4" fill="#64748b" transform="rotate(45,89.1,62.6)"/>
+<rect x="116.9" y="43.5" width="4" height="4" fill="#64748b" transform="rotate(45,118.9,45.5)"/>
+<rect x="146.6" y="43" width="4" height="4" fill="#64748b" transform="rotate(45,148.6,45.0)"/>
+<rect x="176.3" y="41.8" width="4" height="4" fill="#64748b" transform="rotate(45,178.3,43.8)"/>
+<rect x="206" y="42" width="4" height="4" fill="#64748b" transform="rotate(45,208.0,44.0)"/>
+<line x1="153" y1="5" x2="168" y2="5" stroke="#22c55e" stroke-width="1.5"/>
+<circle cx="160.5" cy="5" r="2.5" fill="#22c55e"/>
+<text x="171" y="8" font-size="6.5">Ours</text>
+<line x1="153" y1="17" x2="168" y2="17" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4,2"/>
+<text x="171" y="20" font-size="6.5">cuSPARSELt</text>
+</g></svg>
