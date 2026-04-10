@@ -154,7 +154,7 @@ export default makeScene2D(function* (view) {
     />,
   );
 
-  const headers = ['Exposed', 'CrokTile', 'Triton', 'CuTe', 'CUDA'];
+  const headers = ['Exposed', 'CroqTile', 'Triton', 'CuTe', 'CUDA'];
   const rows = [
     ['Shape', '✓', '✓', '✓', '✓'],
     ['Stride', '—', '✓', '✓', '✓'],

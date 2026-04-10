@@ -148,7 +148,7 @@ def assemble_final(lang: str, slide_indices: list = None):
         "\n".join(f"file '{c.resolve()}'" for c in clip_files), encoding="utf-8"
     )
 
-    final_output = OUTPUT_DIR / f"croktile-intro-{lang}.mp4"
+    final_output = OUTPUT_DIR / f"croqtile-intro-{lang}.mp4"
 
     # Concatenate all clips
     run_ffmpeg(

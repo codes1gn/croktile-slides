@@ -80,7 +80,7 @@ export default makeScene2D(function* (view) {
     <Layout ref={tableContainer} direction="column" y={260} gap={2} opacity={0} />,
   );
 
-  const headers = ['Metric', 'CrokTile', 'CUDA'];
+  const headers = ['Metric', 'CroqTile', 'CUDA'];
   const rows = [
     ['Invalid kernel', 'Compile error', 'Silent bug'],
     ['TMA config', '1 primitive', '5+ steps'],

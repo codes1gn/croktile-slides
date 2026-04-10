@@ -49,6 +49,6 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Serving at http://localhost:${PORT}/`);
-  console.log(`Open http://localhost:${PORT}/decks/croktile-intro/ in your browser`);
+  console.log(`Open http://localhost:${PORT}/decks/croqtile-intro/ in your browser`);
   console.log('Press Ctrl+C to stop.');
 });

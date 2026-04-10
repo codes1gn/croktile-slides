@@ -114,7 +114,7 @@ export default makeScene2D(function* (view) {
   view.add(
     <Txt
       ref={quote}
-      text={'"The bug that takes 5 days to find in CUDA\nis a compile error in CrokTile."'}
+      text={'"The bug that takes 5 days to find in CUDA\nis a compile error in CroqTile."'}
       fill={Colors.fgSecondary}
       fontFamily={Fonts.main}
       fontStyle="italic"

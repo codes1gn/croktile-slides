@@ -5,7 +5,7 @@ const browser = await puppeteer.launch({
   args: ['--no-sandbox', '--disable-setuid-sandbox'],
 });
 
-const base = 'http://localhost:8877/decks/croktile-intro/index.html';
+const base = 'http://localhost:8877/decks/croqtile-intro/index.html';
 
 for (let i = 0; i <= 19; i++) {
   const page = await browser.newPage();
@@ -21,7 +21,7 @@ for (let i = 0; i <= 19; i++) {
   });
   await page.goto(`${base}#/${i}`, { waitUntil: 'networkidle0', timeout: 30000 });
   await new Promise(r => setTimeout(r, 350));
-  await page.screenshot({ path: `/home/albert/workspace/croktile-slides/.screenshots/s${i}.png` });
+  await page.screenshot({ path: `/home/albert/workspace/croqtile-slides/.screenshots/s${i}.png` });
   await page.close();
   console.log(`slide ${i} captured`);
 }

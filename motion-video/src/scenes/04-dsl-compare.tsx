@@ -2,7 +2,7 @@ import {makeScene2D, Code, Txt, Rect, Layout} from '@motion-canvas/2d';
 import {all, waitFor, waitUntil, createRef, slideTransition, Direction} from '@motion-canvas/core';
 import {Colors, Fonts} from '../theme';
 
-const CROKTILE_SHORT = `\
+const CROQTILE_SHORT = `\
 __co__ void matmul(
     global f16 [M, K] lhs,
     global f16 [N, K] rhs,
@@ -77,7 +77,7 @@ export default makeScene2D(function* (view) {
   view.add(
     <Txt
       ref={leftLabel}
-      text="CROKTILE — 36 LOC"
+      text="CROQTILE — 36 LOC"
       fill={Colors.mint500}
       fontFamily={Fonts.mono}
       fontSize={13}
@@ -90,7 +90,7 @@ export default makeScene2D(function* (view) {
   view.add(
     <Code
       ref={leftCode}
-      code={CROKTILE_SHORT}
+      code={CROQTILE_SHORT}
       fontSize={11}
       fontFamily={Fonts.mono}
       x={-380}

@@ -54,7 +54,7 @@ export default makeScene2D(function* (view) {
   view.add(
     <Txt
       ref={title}
-      text="CrokTile — Fewer Lines. Safer Kernels. AI-Ready."
+      text="CroqTile — Fewer Lines. Safer Kernels. AI-Ready."
       fill={Colors.fg}
       fontFamily={Fonts.main}
       fontSize={36}
@@ -130,7 +130,7 @@ export default makeScene2D(function* (view) {
   view.add(
     <Txt
       ref={url}
-      text="github.com/croktile"
+      text="github.com/croqtile"
       fill={Colors.fgDim}
       fontFamily={Fonts.mono}
       fontSize={18}

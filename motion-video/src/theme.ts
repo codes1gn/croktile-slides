@@ -32,7 +32,7 @@ export const Colors = {
   tilelang: '#a78bfa',
   cutlass: '#f59e0b',
   cuda: '#64748b',
-  croktile: '#22c55e',
+  croqtile: '#22c55e',
 };
 
 export const Fonts = {

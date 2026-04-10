@@ -27,7 +27,7 @@ export default makeScene2D(function* (view) {
   view.add(
     <Txt
       ref={heading}
-      text="What makes CrokTile special?"
+      text="What makes CroqTile special?"
       fill={Colors.mint500}
       fontFamily={Fonts.main}
       fontSize={44}

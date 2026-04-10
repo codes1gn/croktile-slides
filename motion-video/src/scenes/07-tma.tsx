@@ -70,9 +70,9 @@ export default makeScene2D(function* (view) {
   yield* waitFor(0.5);
 
   // Mini bar chart
-  const barLabels = ['Croktile', 'Triton', 'CUDA'];
+  const barLabels = ['Croqtile', 'Triton', 'CUDA'];
   const barVals = [2, 12, 35];
-  const barColors = [Colors.croktile, Colors.triton, Colors.cuda];
+  const barColors = [Colors.croqtile, Colors.triton, Colors.cuda];
 
   for (let i = 0; i < 3; i++) {
     const barRect = createRef<Rect>();

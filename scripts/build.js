@@ -4,7 +4,7 @@
  *
  * Usage:
  *   node scripts/build.js                        # build all decks (html + pdf)
- *   node scripts/build.js croktile-intro          # build one deck
+ *   node scripts/build.js croqtile-intro          # build one deck
  *   node scripts/build.js --format html           # HTML only
  */
 

@@ -73,7 +73,7 @@ export default makeScene2D(function* (view) {
     <Layout ref={statContainer} direction="row" gap={80} y={200} opacity={0}>
       <Layout direction="column" alignItems="center">
         <Txt text="2" fill={Colors.mint500} fontFamily={Fonts.mono} fontSize={56} fontWeight={900} />
-        <Txt text="CrokTile primitives" fill={Colors.fgSecondary} fontFamily={Fonts.main} fontSize={14} />
+        <Txt text="CroqTile primitives" fill={Colors.fgSecondary} fontFamily={Fonts.main} fontSize={14} />
       </Layout>
       <Layout direction="column" alignItems="center">
         <Txt text="vs" fill={Colors.fgDim} fontFamily={Fonts.main} fontSize={24} />

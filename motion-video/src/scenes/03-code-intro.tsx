@@ -62,7 +62,7 @@ export default makeScene2D(function* (view) {
   view.add(
     <Txt
       ref={label}
-      text="CrokTile — 36 lines of code"
+      text="CroqTile — 36 lines of code"
       fill={Colors.mint500}
       fontFamily={Fonts.mono}
       fontSize={16}

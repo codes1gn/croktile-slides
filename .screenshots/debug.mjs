@@ -17,7 +17,7 @@ page.on('request', (req) => {
   }
 });
 
-const base = 'http://localhost:8877/decks/croktile-intro/index.html';
+const base = 'http://localhost:8877/decks/croqtile-intro/index.html';
 await page.goto(base, { waitUntil: 'networkidle0', timeout: 30000 });
 await new Promise(r => setTimeout(r, 1000));
 

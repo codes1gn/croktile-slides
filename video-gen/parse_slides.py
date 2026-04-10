@@ -6,7 +6,7 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
-DECK_PATH = Path(__file__).resolve().parent.parent / "decks" / "croktile-intro" / "index.html"
+DECK_PATH = Path(__file__).resolve().parent.parent / "decks" / "croqtile-intro" / "index.html"
 OUTPUT_PATH = Path(__file__).resolve().parent / "narration.json"
 
 
@@ -95,13 +95,13 @@ def build_skeleton(slides):
     """Build a narration.json skeleton from parsed slide data."""
     result = {
         "meta": {
-            "title": "CrokTile: Next-Gen GPU & DSA Kernel Language",
+            "title": "CroqTile: Next-Gen GPU & DSA Kernel Language",
             "voices": {
                 "zh": "zh-CN-YunxiNeural",
                 "en": "en-US-AndrewNeural",
             },
             "rate": {"zh": "+0%", "en": "+0%"},
-            "slide_url_base": "http://localhost:8000/decks/croktile-intro/index.html",
+            "slide_url_base": "http://localhost:8000/decks/croqtile-intro/index.html",
         },
         "slides": [],
     }

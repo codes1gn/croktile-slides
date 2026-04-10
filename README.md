@@ -1,13 +1,13 @@
-# CrokTile Slides & Video Pipeline
+# CroqTile Slides & Video Pipeline
 
-Presentation materials for CrokTile, the next-gen GPU & DSA kernel language.
+Presentation materials for CroqTile, the next-gen GPU & DSA kernel language.
 
 Three workflows live in this repository:
 
 | Workflow | Purpose | Output |
 |----------|---------|--------|
 | **Slides** (reveal.js) | Human-presented talk | Browser-based deck at `localhost:8000` |
-| **Slide-recording video** (Playwright + TTS) | AI-narrated screencast of the slides | `video-gen/output/croktile-intro-{zh,en}.mp4` |
+| **Slide-recording video** (Playwright + TTS) | AI-narrated screencast of the slides | `video-gen/output/croqtile-intro-{zh,en}.mp4` |
 | **Motion-graphics video** (Motion Canvas) | ByteByteGo-style animated explainer | `motion-video/output/*.mp4` |
 
 ---
@@ -15,12 +15,12 @@ Three workflows live in this repository:
 ## Repository Layout
 
 ```
-croktile-slides/
+croqtile-slides/
 ├── decks/
-│   └── croktile-intro/             # reveal.js deck (human-presented)
+│   └── croqtile-intro/             # reveal.js deck (human-presented)
 │       └── index.html
 ├── themes/
-│   └── croktile-dark.css           # Shared CSS theme (mint palette, dark bg)
+│   └── croqtile-dark.css           # Shared CSS theme (mint palette, dark bg)
 ├── assets/
 │   └── images/                     # logo-2.png, banners, SVGs
 ├── scripts/
@@ -76,7 +76,7 @@ This installs `reveal.js@^6` and `puppeteer` (for PDF export).
 npm run dev
 ```
 
-This runs `node scripts/serve.js 8000`. Open http://localhost:8000/decks/croktile-intro/ in your browser.
+This runs `node scripts/serve.js 8000`. Open http://localhost:8000/decks/croqtile-intro/ in your browser.
 
 Alternatively, if Node is unavailable:
 
@@ -97,7 +97,7 @@ npm run dev:py      # uses python3 -m http.server 8000
 
 ### 1.4 Edit slides
 
-The deck is a single file: `decks/croktile-intro/index.html`.
+The deck is a single file: `decks/croqtile-intro/index.html`.
 
 **Structure inside the HTML:**
 
@@ -123,7 +123,7 @@ The deck is a single file: `decks/croktile-intro/index.html`.
 
 ```html
 <div class="editor-showcase" data-tabs='[
-  {"label": "Croktile", "lang": "c", "file": "matmul.co", "code": "..."},
+  {"label": "Croqtile", "lang": "c", "file": "matmul.co", "code": "..."},
   {"label": "Triton",   "lang": "python", "file": "gemm.py", "code": "..."}
 ]'>
 </div>
@@ -139,7 +139,7 @@ __co__ void kernel(...) { ... }
 </div>
 ```
 
-**Theme:** `themes/croktile-dark.css` defines CSS variables (`:root`) for all colors, fonts, and spacing. Edit that file to change the look globally.
+**Theme:** `themes/croqtile-dark.css` defines CSS variables (`:root`) for all colors, fonts, and spacing. Edit that file to change the look globally.
 
 ### 1.5 Build HTML / PDF
 
@@ -197,10 +197,10 @@ Everything is driven by `video-gen/narration.json`. This is the single source of
 ```json
 {
   "meta": {
-    "title": "CrokTile: Next-Gen GPU & DSA Kernel Language",
+    "title": "CroqTile: Next-Gen GPU & DSA Kernel Language",
     "voices": { "zh": "zh-CN-YunxiNeural", "en": "en-US-AndrewNeural" },
     "rate":   { "zh": "+0%", "en": "+0%" },
-    "slide_url_base": "http://localhost:8000/decks/croktile-intro/index.html"
+    "slide_url_base": "http://localhost:8000/decks/croqtile-intro/index.html"
   },
   "slides": [
     {
@@ -309,7 +309,7 @@ python3 pipeline.py assemble --lang en
 1. For each slide, muxes the WebM video with its audio segment(s)
 2. Concatenates all slide clips into a single timeline
 3. Adds fade-in at the start and fade-out at the end
-4. Outputs `output/croktile-intro-zh.mp4` (1080p, H.264 + AAC)
+4. Outputs `output/croqtile-intro-zh.mp4` (1080p, H.264 + AAC)
 
 #### Run everything at once
 
@@ -389,7 +389,7 @@ npm install
 | `@motion-canvas/vite-plugin` | Vite integration for the editor |
 | `@motion-canvas/ffmpeg` | MP4 rendering (frame export + muxing) |
 | `@motion-canvas/ui` | Browser-based editor UI |
-| `@lezer/cpp` | Syntax highlighting for CrokTile/CUDA (C-like) |
+| `@lezer/cpp` | Syntax highlighting for CroqTile/CUDA (C-like) |
 | `@lezer/python` | Syntax highlighting for Triton |
 | `vite@5` | Dev server + bundler |
 | `typescript` | Type checking |
@@ -408,8 +408,8 @@ motion-video/src/
 │   ├── 02-overview.tsx       4-panel grid flies in, cursor clicks panel 1
 │   │
 │   │  Act 1 — Easy to Use (~150s)
-│   ├── 03-code-intro.tsx     CrokTile GEMM code types in line by line
-│   ├── 04-dsl-compare.tsx    Split screen: CrokTile vs Triton/CUDA carousel
+│   ├── 03-code-intro.tsx     CroqTile GEMM code types in line by line
+│   ├── 04-dsl-compare.tsx    Split screen: CroqTile vs Triton/CUDA carousel
 │   ├── 05-loc-bars.tsx       Bar chart grows, "Zero-Cost Abstraction" text
 │   ├── 06-tensor.tsx         Zoom into tensor decls, comparison table
 │   ├── 07-tma.tsx            TMA one-liner vs CUDA 35 lines
@@ -598,7 +598,7 @@ import myScene from './scenes/XX-my-scene?scene';
 
 | Task | Command(s) |
 |------|-----------|
-| Serve slides locally | `npm run dev` → open http://localhost:8000/decks/croktile-intro/ |
+| Serve slides locally | `npm run dev` → open http://localhost:8000/decks/croqtile-intro/ |
 | Generate Chinese TTS audio | `cd video-gen && python3 pipeline.py tts --lang zh` |
 | Record slides to video | `npm run dev` (term 1) + `cd video-gen && python3 pipeline.py capture --lang zh` (term 2) |
 | Assemble final slide video | `cd video-gen && python3 pipeline.py assemble --lang zh` |

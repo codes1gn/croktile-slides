@@ -1,5 +1,5 @@
 /*
- * CrokTile Theme for reveal.js
+ * CroqTile Theme for reveal.js
  * Wide 16:9 layout, beamer-style header/footer, flat solid backgrounds
  */
 
@@ -752,7 +752,7 @@
   min-width: 24px;
 }
 
-.loc-hbar.croktile { background: var(--mint-500); }
+.loc-hbar.croqtile { background: var(--mint-500); }
 .loc-hbar.triton { background: #38bdf8; }
 .loc-hbar.tilelang { background: #a78bfa; }
 .loc-hbar.cutlass { background: #f59e0b; }

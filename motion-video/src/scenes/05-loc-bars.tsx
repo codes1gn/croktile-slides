@@ -4,7 +4,7 @@ import {Colors, Fonts, Radius} from '../theme';
 
 const BARS = [
   {label: 'TileLang', value: 22, color: Colors.tilelang},
-  {label: 'CrokTile', value: 36, color: Colors.croktile},
+  {label: 'CroqTile', value: 36, color: Colors.croqtile},
   {label: 'Triton', value: 64, color: Colors.triton},
   {label: 'CUDA + CuTe', value: 182, color: Colors.cuda},
   {label: 'CUTLASS', value: 280, color: Colors.cutlass},
@@ -108,7 +108,7 @@ export default makeScene2D(function* (view) {
   view.add(
     <Txt
       ref={explain}
-      text="Higher abstraction → less code, simpler syntax.\nBut no performance loss — CrokTile compiles to the same optimal PTX."
+      text="Higher abstraction → less code, simpler syntax.\nBut no performance loss — CroqTile compiles to the same optimal PTX."
       fill={Colors.fgSecondary}
       fontFamily={Fonts.main}
       fontSize={18}

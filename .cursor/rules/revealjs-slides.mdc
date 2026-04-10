@@ -4,12 +4,12 @@ globs: decks/**/*.html, themes/*.css
 alwaysApply: false
 ---
 
-# CrokTile Slides — reveal.js
+# CroqTile Slides — reveal.js
 
 ## Structure
 - Each deck lives in `decks/<name>/index.html`
 - Build outputs go to `decks/<name>/dist/`
-- Theme CSS in `themes/croktile-dark.css`
+- Theme CSS in `themes/croqtile-dark.css`
 - Shared assets in `assets/images/`
 
 ## Slide Syntax
@@ -19,7 +19,7 @@ alwaysApply: false
 - Use `<div class="split">` for two-column layouts
 
 ## Code Blocks
-- Use `<div class="editor-block" data-lang="choreo" data-file="kernel.co" data-badge="CROKTILE">` for single code blocks with IDE chrome
+- Use `<div class="editor-block" data-lang="choreo" data-file="kernel.co" data-badge="CROQTILE">` for single code blocks with IDE chrome
 - Use `<div class="editor-showcase" data-tabs='[...]'>` for tabbed code comparison
 - Supported languages: `choreo`, `cpp`, `cuda`
 - The custom syntax highlighter runs client-side in vanilla JS

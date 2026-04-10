@@ -58,7 +58,7 @@ export default makeScene2D(function* (view) {
 
   yield* waitFor(0.4);
 
-  const titleText = 'CrokTile';
+  const titleText = 'CroqTile';
   for (let i = 0; i <= titleText.length; i++) {
     title().text(titleText.slice(0, i));
     yield* waitFor(0.08);

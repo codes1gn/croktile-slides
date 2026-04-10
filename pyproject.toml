@@ -1,7 +1,7 @@
 [project]
-name = "croktile-slides"
+name = "croqtile-slides"
 version = "2.0.0"
-description = "CrokTile presentation slides powered by reveal.js"
+description = "CroqTile presentation slides powered by reveal.js"
 requires-python = ">=3.10"
 dependencies = []
 

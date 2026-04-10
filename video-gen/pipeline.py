@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CrokTile Slides-to-Video Pipeline
+CroqTile Slides-to-Video Pipeline
 ==================================
 Orchestrates: parse -> tts -> capture -> assemble
 
@@ -76,7 +76,7 @@ def cmd_capture(args):
     except Exception:
         print(f"\nERROR: Slide server not reachable at {base_url}")
         print("Start it first with: npm run dev  (or: node scripts/serve.js)")
-        print("from the croktile-slides/ directory.\n")
+        print("from the croqtile-slides/ directory.\n")
         sys.exit(1)
 
     asyncio.run(record_all(lang=lang, slide_indices=slide_indices))
@@ -137,7 +137,7 @@ def cmd_all(args):
     print("\n" + "=" * 60)
     print("PIPELINE COMPLETE")
     output_dir = WORK_DIR / "output"
-    for f in sorted(output_dir.glob("croktile-intro-*.mp4")):
+    for f in sorted(output_dir.glob("croqtile-intro-*.mp4")):
         size_mb = f.stat().st_size / (1024 * 1024)
         print(f"  {f.name}  ({size_mb:.1f} MB)")
     print("=" * 60)

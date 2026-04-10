@@ -92,7 +92,7 @@ export default makeScene2D(function* (view) {
     <Layout ref={tableContainer} direction="column" x={250} y={170} gap={2} opacity={0} />,
   );
 
-  const headers = ['Capability', 'CrokTile', 'Triton', 'TileLang', 'CuTe'];
+  const headers = ['Capability', 'CroqTile', 'Triton', 'TileLang', 'CuTe'];
   const rows = [
     ['Named symbols', '✓', '—', '—', '—'],
     ['Affine exprs', '✓', '—', '—', '—'],
